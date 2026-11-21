@@ -9,9 +9,9 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:radial-gradient(1000px 700px at 50% -10%,#1a2350,#070b16 70%);color:var(--text);
-  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
 .term{width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);
-  border-radius:24px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  border-radius:24px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.5);position:relative;z-index:2}
 .brand{text-align:center;margin-bottom:22px}
 .logo{width:56px;height:56px;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;
   font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));margin-bottom:10px}
@@ -21,13 +21,32 @@ h1{font-size:20px;margin:0 0 4px}
   color:var(--text);font-size:16px;margin-bottom:12px;font-family:inherit;outline:none}
 .input:focus{border-color:var(--accent)}
 .btn{width:100%;padding:15px;border-radius:12px;border:none;cursor:pointer;font-size:16px;font-weight:700;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:inherit}
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:inherit;
+  transition:transform .1s}
+.btn:active{transform:scale(.98)}
 .btn:disabled{opacity:.5;cursor:wait}
-.result{margin-top:16px;padding:16px;border-radius:14px;text-align:center;font-size:15px;display:none}
+.result{margin-top:16px;padding:16px;border-radius:14px;text-align:center;font-size:15px;display:none;
+  animation:resultIn .35s ease}
 .result.show{display:block}
 .result.ok{background:rgba(37,209,138,.12);border:1px solid var(--ok);color:var(--ok)}
 .result.err{background:rgba(255,91,110,.12);border:1px solid var(--err);color:var(--err)}
 .result .big{font-size:22px;font-weight:700;margin-top:6px}
+@keyframes resultIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+
+/* ===== АНИМАЦИЯ ===== */
+.anim-overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  pointer-events:none;z-index:9999;animation:animFade 1.5s ease forwards}
+.anim-icon{width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:48px;font-weight:800;color:#fff;margin-bottom:14px;
+  animation:animPop .55s cubic-bezier(.2,.9,.3,1.4)}
+.anim-icon.ok{background:linear-gradient(135deg,#25d18a,#1fa870);box-shadow:0 12px 48px rgba(37,209,138,.55)}
+.anim-icon.out{background:linear-gradient(135deg,#5b7cff,#7c5bff);box-shadow:0 12px 48px rgba(91,124,255,.55)}
+.anim-amt{font-size:26px;font-weight:800;animation:animSlide .5s ease .1s both;text-shadow:0 2px 12px rgba(0,0,0,.6)}
+.anim-amt.pos{color:#5feeb4} .anim-amt.neg{color:#fff}
+.anim-label{color:var(--muted);font-size:13px;margin-top:6px;animation:animSlide .5s ease .2s both}
+@keyframes animFade{0%{opacity:0}15%{opacity:1}80%{opacity:1}100%{opacity:0}}
+@keyframes animPop{0%{transform:scale(0)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes animSlide{0%{transform:translateY(16px);opacity:0}100%{transform:translateY(0);opacity:1}}
 </style>
 </head>
 <body>
@@ -68,12 +87,24 @@ function showResult(ok, msg, extra){
   r.innerHTML = `<div>${msg}</div>${extra ? `<div class="big">${extra}</div>` : ''}`;
 }
 
+function celebrate(positive, amount, label){
+  const el = document.createElement('div');
+  el.className = 'anim-overlay';
+  el.innerHTML = `
+    <div class="anim-icon ${positive?'ok':'out'}">${positive?'✓':'↑'}</div>
+    <div class="anim-amt ${positive?'pos':'neg'}">${positive?'+':'−'}${fmt(amount)}</div>
+    <div class="anim-label">${label||''}</div>
+  `;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(), 1600);
+}
+
 async function terminalPay(cardNumber, amountRaw){
   const amount = Math.round((parseFloat(String(amountRaw).replace(',','.'))||0)*100)/100;
   if (!cardNumber) return { ok:false, msg:'Введите номер карты' };
   if (!(amount > 0)) return { ok:false, msg:'Неверная сумма' };
 
-  // 1. Найти владельца карты по номеру
+  // 1. Найти владельца карты
   const idx = await db.ref('cards/'+cardNumber).once('value');
   if (!idx.exists()) return { ok:false, msg:'Карта не найдена' };
   const phone = idx.val().phone;
@@ -85,13 +116,13 @@ async function terminalPay(cardNumber, amountRaw){
   if (user.frozen) return { ok:false, msg:'Аккаунт клиента заморожен' };
   if (!user.cards || !user.cards[cardNumber]) return { ok:false, msg:'Карта неактивна' };
 
-  // 3. Атомарное списание с баланса карты
-  const res = await db.ref('users/'+phone+'/cards/'+cardNumber+'/balance').transaction(b => {
+  // 3. Атомарное списание с ОСНОВНОГО СЧЁТА (карта = основной счёт)
+  const res = await db.ref('users/'+phone+'/balance').transaction(b => {
     const bal = b || 0;
     if (bal < amount) return;   // abort
     return bal - amount;
   });
-  if (!res.committed) return { ok:false, msg:'Недостаточно средств на карте' };
+  if (!res.committed) return { ok:false, msg:'Недостаточно средств' };
 
   // 4. История клиента
   await db.ref('users/'+phone+'/history').push({
@@ -105,12 +136,16 @@ async function terminalPay(cardNumber, amountRaw){
 $('btnPay').onclick = async () => {
   const card = $('cardNumber').value.replace(/\D/g,'');
   const amount = $('amount').value;
+  const parsed = Math.round((parseFloat(String(amount).replace(',','.'))||0)*100)/100;
   $('btnPay').disabled = true;
   $('btnPay').textContent = 'Обработка…';
   try {
     const r = await terminalPay(card, amount);
-    showResult(r.ok, r.msg, r.ok ? 'Списано ' + fmt(parseFloat(amount.replace(',','.'))) : '');
-    if (r.ok) $('amount').value = '';
+    showResult(r.ok, r.msg, r.ok ? 'Списано ' + fmt(parsed) : '');
+    if (r.ok){
+      celebrate(false, parsed, 'Оплата в терминале');
+      $('amount').value = '';
+    }
   } catch(err){
     showResult(false, 'Ошибка: ' + err.message);
   }
@@ -118,7 +153,6 @@ $('btnPay').onclick = async () => {
   $('btnPay').textContent = 'Оплатить';
 };
 
-// Разрешаем ввод только цифр в поле карты
 $('cardNumber').addEventListener('input', e => {
   e.target.value = e.target.value.replace(/\D/g,'');
 });
