@@ -67,7 +67,6 @@ h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
 <body>
 <div class="wrap" id="root"></div>
 
-<!-- Сканер QR -->
 <div id="scanModal" class="modal">
   <div class="modal-body">
     <div class="modal-head"><b>Сканировать заказ</b>
@@ -79,7 +78,6 @@ h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
   </div>
 </div>
 
-<!-- Результат -->
 <div id="resultModal" class="modal">
   <div class="modal-body" id="resultBody"></div>
 </div>
@@ -167,23 +165,35 @@ function renderLogin(){
 
 function subscribe(pvzId){
   state.pvzId = pvzId;
-  if (unsubPvz) unsubPvz();
-  unsubPvz = db.ref('pvz/'+pvzId).on('value', snap => {
+  if (unsubPvz){ try { unsubPvz(); } catch(e){ console.warn(e); } unsubPvz = null; }
+  if (unsubRecent){ try { unsubRecent(); } catch(e){ console.warn(e); } unsubRecent = null; }
+
+  // pvz/{id}
+  const pvzRef = db.ref('pvz/'+pvzId);
+  const pvzCb = snap => {
     if (!snap.exists()){ logout(); return; }
     state.pvz = snap.val();
     renderSoon();
-  });
-  if (unsubRecent) unsubRecent();
-  unsubRecent = db.ref('pvzIssued/'+pvzId).on('value', snap => {
+  };
+  pvzRef.on('value', pvzCb);
+  unsubPvz = () => pvzRef.off('value', pvzCb);
+
+  // pvzIssued/{id}
+  const recentRef = db.ref('pvzIssued/'+pvzId);
+  const recentCb = snap => {
     state.recent = snap.val() || {};
     renderSoon();
-  });
+  };
+  recentRef.on('value', recentCb);
+  unsubRecent = () => recentRef.off('value', recentCb);
 }
+
 function logout(){
-  if (unsubPvz){ unsubPvz(); unsubPvz = null; }
-  if (unsubRecent){ unsubRecent(); unsubRecent = null; }
+  if (unsubPvz){ try { unsubPvz(); } catch(e){ console.warn(e); } unsubPvz = null; }
+  if (unsubRecent){ try { unsubRecent(); } catch(e){ console.warn(e); } unsubRecent = null; }
+
   localStorage.removeItem('pvz_session');
-  state.pvzId = null; state.pvz = null; state.recent = {};
+  state.pvzId = null; state.pvz = null; state.recent = {}; state.scanResult = null;
   render();
 }
 
@@ -375,9 +385,6 @@ document.getElementById('btnCodeGo').onclick = async () => {
 document.getElementById('codeInput').addEventListener('input', e => { e.target.value = digits(e.target.value); });
 document.getElementById('codeInput').addEventListener('keydown', e => {
   if (e.key==='Enter') document.getElementById('btnCodeGo').click();
-});
-document.addEventListener('click', (e) => {
-  if (e.target.closest('[data-close]')) closeModal(e.target.dataset.close);
 });
 
 /* ================= СТАРТ ================= */
