@@ -6,7 +6,8 @@
 <title>Курсив Маркет — ПВЗ</title>
 <style>
 :root{--bg:#0b1020;--card:#141b33;--card2:#1b2444;--text:#e8ecff;--muted:#8b95c2;
-  --accent:#5b7cff;--accent2:#7c5bff;--ok:#25d18a;--err:#ff5b6e;--border:#26305a}
+  --accent:#5b7cff;--accent2:#7c5bff;--ok:#25d18a;--err:#ff5b6e;--warn:#ffc107;
+  --blue:#5b9cff;--border:#26305a}
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:radial-gradient(1200px 800px at 20% -10%, #1a2350, #0b1020 60%);
@@ -20,6 +21,11 @@ h2{font-size:20px;margin:0 0 12px}
 h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
 .muted{color:var(--muted)} .small{font-size:12px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+.section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+.section-title{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:700;font-size:15px}
+.section-title .pill{font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;letter-spacing:.4px}
+.pill.issue{background:rgba(37,209,138,.15);color:var(--ok)}
+.pill.intake{background:rgba(91,156,255,.15);color:var(--blue)}
 .input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);
   background:#0f1530;color:var(--text);font-size:15px;margin-bottom:10px;font-family:inherit;outline:none}
 .input:focus{border-color:var(--accent)}
@@ -30,6 +36,7 @@ h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
 .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
 .btn.small{width:auto;padding:8px 14px;font-size:13px;border-radius:10px}
 .btn.ok{background:var(--ok)}
+.btn.blue{background:linear-gradient(135deg,#4b8cff,#6b6bff)}
 .btn:disabled{opacity:.5;cursor:wait}
 .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
 .panel{width:100%;max-width:400px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:26px}
@@ -47,8 +54,9 @@ h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
 .modal-head b{font-size:17px}
 .close-btn{background:transparent;border:1px solid var(--border);color:var(--muted);width:32px;height:32px;
   border-radius:10px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
-#qrReader{width:100%;min-height:220px;border-radius:14px;overflow:hidden;background:#0a1024;border:1px solid var(--border)}
-#qrReader video{border-radius:14px}
+#qrReaderIssue,#qrReaderIntake{width:100%;min-height:220px;border-radius:14px;overflow:hidden;
+  background:#0a1024;border:1px solid var(--border)}
+#qrReaderIssue video,#qrReaderIntake video{border-radius:14px}
 .cell-display{text-align:center;padding:24px;background:linear-gradient(135deg,#243066,#3a2a6e);
   border-radius:20px;margin-bottom:16px}
 .cell-num{font-size:56px;font-weight:800;color:#fff;line-height:1}
@@ -58,6 +66,7 @@ h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
 .hist{display:flex;align-items:center;gap:10px;padding:10px;background:var(--card2);border-radius:10px;margin-bottom:6px;font-size:13px}
 .hist-icon{width:32px;height:32px;border-radius:8px;background:rgba(37,209,138,.15);color:var(--ok);
   display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hist-icon.blue{background:rgba(91,156,255,.15);color:var(--blue)}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:12px;
   background:var(--card2);border:1px solid var(--border);font-size:14px;z-index:9999;animation:up .2s;max-width:90vw}
 .toast.ok{border-color:var(--ok)} .toast.err{border-color:var(--err)}
@@ -67,14 +76,25 @@ h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
 <body>
 <div class="wrap" id="root"></div>
 
-<div id="scanModal" class="modal">
+<div id="issueScanModal" class="modal">
   <div class="modal-body">
-    <div class="modal-head"><b>Сканировать заказ</b>
-      <button class="close-btn" id="btnScanClose">✕</button></div>
-    <div id="qrReader"></div>
+    <div class="modal-head"><b>Сканировать QR клиента</b>
+      <button class="close-btn" id="btnIssueScanClose">✕</button></div>
+    <div id="qrReaderIssue"></div>
     <p class="muted small" style="text-align:center;margin:14px 0 8px">или введите 6-значный код</p>
-    <input id="codeInput" class="input code-input" inputmode="numeric" maxlength="6" placeholder="000000"/>
-    <button class="btn" id="btnCodeGo">Найти заказ</button>
+    <input id="issueCodeInput" class="input code-input" inputmode="numeric" maxlength="6" placeholder="000000"/>
+    <button class="btn" id="btnIssueCodeGo">Найти заказ</button>
+  </div>
+</div>
+
+<div id="intakeScanModal" class="modal">
+  <div class="modal-body">
+    <div class="modal-head"><b>Сканировать QR коробки</b>
+      <button class="close-btn" id="btnIntakeScanClose">✕</button></div>
+    <div id="qrReaderIntake"></div>
+    <p class="muted small" style="text-align:center;margin:14px 0 8px">или введите код коробки</p>
+    <input id="intakeCodeInput" class="input" placeholder="box000000000" autocomplete="off"/>
+    <button class="btn blue" id="btnIntakeCodeGo">Принять коробку</button>
   </div>
 </div>
 
@@ -86,7 +106,6 @@ h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
-/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyBlZ5ZtyTXgtXxSJAx1jOxwhTrzlHRJmo",
   authDomain: "bk-cashier.firebaseapp.com",
@@ -100,7 +119,6 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 db.goOnline();
 
-/* ================= УТИЛИТЫ ================= */
 const fmt = n => new Intl.NumberFormat('ru-RU').format(Number(n)||0) + ' ₽';
 const digits = v => String(v||'').replace(/\D/g,'');
 const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -115,9 +133,21 @@ function toast(msg, type){
 function openModal(id){ document.getElementById(id).classList.add('show'); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 
-/* ================= СОСТОЯНИЕ ================= */
-const state = { pvzId: null, pvz: null, recent: {}, scanResult: null };
-let unsubPvz = null, unsubRecent = null;
+function statusLabel(s){
+  if (s === 'pending' || s === 'transit') return 'В пути';
+  if (s === 'ready') return 'Готов к выдаче';
+  if (s === 'issued') return 'Выдан';
+  return s || '—';
+}
+function getPvzCity(pvz){
+  if (!pvz) return '';
+  if (pvz.city) return pvz.city;
+  const parts = String(pvz.address||'').split(',');
+  return parts[0] ? parts[0].trim() : '';
+}
+
+const state = { pvzId: null, pvz: null, recent: {}, intakeRecent: {}, scanResult: null, intakeResult: null, pvzOrders: {} };
+let unsubPvz = null, unsubRecent = null, unsubIntakeRecent = null, unsubOrders = null;
 let renderPending = false;
 function renderSoon(){
   if (renderPending) return;
@@ -125,10 +155,8 @@ function renderSoon(){
   requestAnimationFrame(()=>{ renderPending = false; render(); });
 }
 
-/* ================= АВТОРИЗАЦИЯ ================= */
 function renderLogin(){
-  const root = document.getElementById('root');
-  root.innerHTML = `
+  document.getElementById('root').innerHTML = `
     <div class="login-wrap"><div class="panel">
       <div class="brand"><div class="logo">К</div><h1>Курсив ПВЗ</h1></div>
       <h2>Вход для ПВЗ</h2>
@@ -167,8 +195,9 @@ function subscribe(pvzId){
   state.pvzId = pvzId;
   if (unsubPvz){ try { unsubPvz(); } catch(e){ console.warn(e); } unsubPvz = null; }
   if (unsubRecent){ try { unsubRecent(); } catch(e){ console.warn(e); } unsubRecent = null; }
+  if (unsubIntakeRecent){ try { unsubIntakeRecent(); } catch(e){ console.warn(e); } unsubIntakeRecent = null; }
+  if (unsubOrders){ try { unsubOrders(); } catch(e){ console.warn(e); } unsubOrders = null; }
 
-  // pvz/{id}
   const pvzRef = db.ref('pvz/'+pvzId);
   const pvzCb = snap => {
     if (!snap.exists()){ logout(); return; }
@@ -178,22 +207,40 @@ function subscribe(pvzId){
   pvzRef.on('value', pvzCb);
   unsubPvz = () => pvzRef.off('value', pvzCb);
 
-  // pvzIssued/{id}
   const recentRef = db.ref('pvzIssued/'+pvzId);
-  const recentCb = snap => {
-    state.recent = snap.val() || {};
-    renderSoon();
-  };
+  const recentCb = snap => { state.recent = snap.val() || {}; renderSoon(); };
   recentRef.on('value', recentCb);
   unsubRecent = () => recentRef.off('value', recentCb);
+
+  const intakeRef = db.ref('pvzIntake/'+pvzId);
+  const intakeCb = snap => { state.intakeRecent = snap.val() || {}; renderSoon(); };
+  intakeRef.on('value', intakeCb);
+  unsubIntakeRecent = () => intakeRef.off('value', intakeCb);
+
+  // Заказы этого ПВЗ (для контроля, что в приёмке только его коробки)
+  const ordersRef = db.ref('orderIndex');
+  const ordersCb = snap => {
+    const all = snap.val() || {};
+    const filtered = {};
+    for (const [id, o] of Object.entries(all)){
+      if (o.pvzId === pvzId) filtered[id] = o;
+    }
+    state.pvzOrders = filtered;
+    renderSoon();
+  };
+  ordersRef.on('value', ordersCb);
+  unsubOrders = () => ordersRef.off('value', ordersCb);
 }
 
 function logout(){
   if (unsubPvz){ try { unsubPvz(); } catch(e){ console.warn(e); } unsubPvz = null; }
   if (unsubRecent){ try { unsubRecent(); } catch(e){ console.warn(e); } unsubRecent = null; }
+  if (unsubIntakeRecent){ try { unsubIntakeRecent(); } catch(e){ console.warn(e); } unsubIntakeRecent = null; }
+  if (unsubOrders){ try { unsubOrders(); } catch(e){ console.warn(e); } unsubOrders = null; }
 
   localStorage.removeItem('pvz_session');
-  state.pvzId = null; state.pvz = null; state.recent = {}; state.scanResult = null;
+  state.pvzId = null; state.pvz = null; state.recent = {}; state.intakeRecent = {};
+  state.scanResult = null; state.intakeResult = null; state.pvzOrders = {};
   render();
 }
 
@@ -218,6 +265,23 @@ async function findOrderByCode(code6){
   if (!oSnap.exists()) throw new Error('Заказ не найден');
   return { orderId, phone, order: oSnap.val() };
 }
+
+async function processIssueLookup(input){
+  let result;
+  if (input.qr) result = await findOrderByQr(input.qr);
+  else if (input.code) result = await findOrderByCode(input.code);
+  else throw new Error('Нет данных');
+  if (result.order.status === 'issued') throw new Error('Заказ уже выдан');
+  if (result.order.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
+  const st = result.order.status;
+  if (st !== 'ready' && st !== 'pending'){
+    throw new Error('Заказ ещё не принят на ПВЗ. Сначала отсканируйте коробку во вкладке «Приёмка»');
+  }
+  state.scanResult = result;
+  renderIssueResult(result);
+  openModal('resultModal');
+}
+
 async function issueOrder(orderId, phone, code6){
   const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
   if (!oSnap.exists()) throw new Error('Заказ не найден');
@@ -235,18 +299,8 @@ async function issueOrder(orderId, phone, code6){
   };
   await db.ref().update(updates);
 }
-async function processLookup(input){
-  let result;
-  if (input.qr) result = await findOrderByQr(input.qr);
-  else if (input.code) result = await findOrderByCode(input.code);
-  else throw new Error('Нет данных');
-  if (result.order.status === 'issued') throw new Error('Заказ уже выдан');
-  if (result.order.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
-  state.scanResult = result;
-  renderResult(result);
-  openModal('resultModal');
-}
-function renderResult({ orderId, phone, order }){
+
+function renderIssueResult({ orderId, phone, order }){
   document.getElementById('resultBody').innerHTML = `
     <div class="modal-head"><b>Заказ найден</b>
       <button class="close-btn" id="btnResClose">✕</button></div>
@@ -284,11 +338,89 @@ function renderResult({ orderId, phone, order }){
   };
 }
 
+/* ================= ПРИЁМКА ================= */
+async function findOrderByBox(boxCode){
+  const code = String(boxCode||'').trim();
+  if (!/^box\d{9}$/.test(code)) throw new Error('Неверный формат. Ожидается box + 9 цифр');
+  const idx = await db.ref('boxIndex/'+code).once('value');
+  if (!idx.exists()) throw new Error('Коробка не найдена');
+  const data = idx.val();
+  if (data.pvzId !== state.pvzId) throw new Error('Эта коробка для другого ПВЗ');
+  const oSnap = await db.ref('users/'+data.phone+'/orders/'+data.orderId).once('value');
+  if (!oSnap.exists()) throw new Error('Заказ не найден');
+  return { orderId: data.orderId, phone: data.phone, order: oSnap.val(), boxCode: code };
+}
+
+async function processIntakeLookup(boxCode){
+  const result = await findOrderByBox(boxCode);
+  if (result.order.status === 'ready') throw new Error('Коробка уже принята');
+  if (result.order.status === 'issued') throw new Error('Заказ уже выдан клиенту');
+  if (result.order.status !== 'transit' && result.order.status !== 'pending'){
+    throw new Error('Заказ в недопустимом статусе');
+  }
+  state.intakeResult = result;
+  renderIntakeResult(result);
+  openModal('resultModal');
+}
+
+async function receiveOrder(orderId, phone, boxCode){
+  const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
+  if (!oSnap.exists()) throw new Error('Заказ не найден');
+  const o = oSnap.val();
+  if (o.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
+  if (o.status === 'ready' || o.status === 'issued') throw new Error('Заказ уже принят');
+  const updates = {};
+  updates['users/'+phone+'/orders/'+orderId+'/status'] = 'ready';
+  updates['users/'+phone+'/orders/'+orderId+'/receivedAt'] = Date.now();
+  updates['orderIndex/'+orderId+'/status'] = 'ready';
+  updates['pvzIntake/'+state.pvzId+'/'+orderId] = {
+    phone, boxCode, cell: o.cell, receivedAt: Date.now()
+  };
+  await db.ref().update(updates);
+}
+
+function renderIntakeResult({ orderId, phone, order, boxCode }){
+  document.getElementById('resultBody').innerHTML = `
+    <div class="modal-head"><b>Получена коробка</b>
+      <button class="close-btn" id="btnResClose">✕</button></div>
+    <div class="cell-display">
+      <div class="cell-label">Положить в ячейку</div>
+      <div class="cell-num">${order.cell}</div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="muted small" style="margin-bottom:6px">Состав</div>
+      ${order.items.map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji} ${esc(i.name)} ×${i.qty}</div>`).join('')}
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="info-row"><span>Клиент</span><b>${esc(phone)}</b></div>
+      <div class="info-row"><span>Код получения</span><b>${order.code6}</b></div>
+      <div class="info-row"><span>Коробка</span><b>${esc(boxCode)}</b></div>
+    </div>
+    <button class="btn blue" id="btnReceive">Подтвердить приёмку</button>
+  `;
+  document.getElementById('btnResClose').onclick = () => {
+    state.intakeResult = null; closeModal('resultModal');
+  };
+  document.getElementById('btnReceive').onclick = async () => {
+    if (!state.intakeResult) return;
+    const btn = document.getElementById('btnReceive');
+    btn.disabled = true; btn.textContent = 'Принимаем…';
+    try {
+      await receiveOrder(state.intakeResult.orderId, state.intakeResult.phone, state.intakeResult.boxCode);
+      toast('Коробка принята. Клиент уведомлён', 'ok');
+      state.intakeResult = null;
+      closeModal('resultModal');
+    } catch(err){ toast(err.message,'err'); }
+    btn.disabled = false; btn.textContent = 'Подтвердить приёмку';
+  };
+}
+
 /* ================= РЕНДЕР ================= */
 function render(){
   if (!state.pvzId || !state.pvz){ renderLogin(); return; }
   const pvz = state.pvz;
-  const recentList = Object.values(state.recent).sort((a,b)=>b.issuedAt-a.issuedAt).slice(0, 10);
+  const recentList = Object.values(state.recent).sort((a,b)=>b.issuedAt-a.issuedAt).slice(0, 5);
+  const intakeList = Object.values(state.intakeRecent).sort((a,b)=>b.receivedAt-a.receivedAt).slice(0, 5);
 
   document.getElementById('root').innerHTML = `
     <div class="header">
@@ -298,19 +430,47 @@ function render(){
     <div class="content">
       <h2>${esc(pvz.name)}</h2>
       <div class="card">
+        <div class="info-row"><span>Город</span><b>${esc(getPvzCity(pvz)||'—')}</b></div>
         <div class="info-row"><span>Адрес</span><b style="text-align:right;max-width:60%">${esc(pvz.address)}</b></div>
         <div class="info-row"><span>График</span><b>${esc(pvz.schedule||'—')}</b></div>
         <div class="info-row"><span>Логин</span><b>${esc(pvz.login||'—')}</b></div>
       </div>
 
-      <div class="card">
-        <h3>Выдать заказ</h3>
+      <div class="section">
+        <div class="section-title">
+          <span>Выдача клиенту</span>
+          <span class="pill issue">QR клиента / код</span>
+        </div>
         <p class="muted small" style="margin:0 0 12px">Отсканируйте QR клиента или введите 6-значный код</p>
-        <button class="btn" id="btnScan">📷 Сканировать QR</button>
+        <button class="btn" id="btnIssueScan">📷 Сканировать QR клиента</button>
         <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите код вручную</div>
-        <input id="inlineCode" class="input code-input" inputmode="numeric" maxlength="6" placeholder="000000"/>
-        <button class="btn ghost" id="btnInlineGo">Найти заказ</button>
+        <input id="inlineIssueCode" class="input code-input" inputmode="numeric" maxlength="6" placeholder="000000"/>
+        <button class="btn ghost" id="btnInlineIssueGo">Найти заказ</button>
       </div>
+
+      <div class="section">
+        <div class="section-title">
+          <span>Приёмка коробок</span>
+          <span class="pill intake">box + 9 цифр</span>
+        </div>
+        <p class="muted small" style="margin:0 0 12px">Отсканируйте QR коробки от поставщика или введите код</p>
+        <button class="btn blue" id="btnIntakeScan">📦 Сканировать QR коробки</button>
+        <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите код коробки</div>
+        <input id="inlineIntakeCode" class="input" placeholder="box000000000" autocomplete="off"/>
+        <button class="btn ghost" id="btnInlineIntakeGo">Принять коробку</button>
+      </div>
+
+      ${intakeList.length ? `<div class="card">
+        <h3>Недавно принято</h3>
+        ${intakeList.map(r=>`
+          <div class="hist">
+            <div class="hist-icon blue">📦</div>
+            <div style="flex:1">
+              <div><b>Ячейка ${r.cell}</b> · ${esc(r.boxCode)}</div>
+              <div class="muted small">${esc(r.phone)} · ${new Date(r.receivedAt).toLocaleString('ru-RU')}</div>
+            </div>
+          </div>`).join('')}
+      </div>` : ''}
 
       ${recentList.length ? `<div class="card">
         <h3>Недавно выдано</h3>
@@ -326,32 +486,52 @@ function render(){
     </div>
   `;
   document.getElementById('btnLogout').onclick = logout;
-  document.getElementById('btnScan').onclick = openScanner;
-  document.getElementById('inlineCode').addEventListener('input', e => { e.target.value = digits(e.target.value); });
-  document.getElementById('inlineCode').addEventListener('keydown', e => {
-    if (e.key==='Enter') document.getElementById('btnInlineGo').click();
+
+  document.getElementById('btnIssueScan').onclick = openIssueScanner;
+  document.getElementById('btnIntakeScan').onclick = openIntakeScanner;
+
+  document.getElementById('inlineIssueCode').addEventListener('input', e => { e.target.value = digits(e.target.value); });
+  document.getElementById('inlineIssueCode').addEventListener('keydown', e => {
+    if (e.key==='Enter') document.getElementById('btnInlineIssueGo').click();
   });
-  document.getElementById('btnInlineGo').onclick = async () => {
-    try { await processLookup({ code: document.getElementById('inlineCode').value }); }
+  document.getElementById('btnInlineIssueGo').onclick = async () => {
+    try { await processIssueLookup({ code: document.getElementById('inlineIssueCode').value }); }
+    catch(err){ toast(err.message,'err'); }
+  };
+
+  document.getElementById('inlineIntakeCode').addEventListener('input', e => {
+    let v = e.target.value.toLowerCase().replace(/[^a-z0-9]/g,'');
+    if (!v.startsWith('box') && v.length > 0){
+      // если начали с цифр — добавим box
+      v = 'box' + v.replace(/\D/g,'');
+    }
+    e.target.value = v.slice(0, 12);
+  });
+  document.getElementById('inlineIntakeCode').addEventListener('keydown', e => {
+    if (e.key==='Enter') document.getElementById('btnInlineIntakeGo').click();
+  });
+  document.getElementById('btnInlineIntakeGo').onclick = async () => {
+    try { await processIntakeLookup(document.getElementById('inlineIntakeCode').value); }
     catch(err){ toast(err.message,'err'); }
   };
 }
 
-/* ================= СКАНЕР ================= */
-let scanner = null, scanBusy = false;
-async function openScanner(){
-  document.getElementById('codeInput').value = '';
-  openModal('scanModal');
-  if (!scanner){
-    try { scanner = new Html5Qrcode('qrReader'); }
-    catch(e){ console.warn('init', e); return; }
+/* ================= СКАНЕР ВЫДАЧИ ================= */
+let issueScanner = null, issueScanBusy = false;
+async function openIssueScanner(){
+  document.getElementById('issueCodeInput').value = '';
+  openModal('issueScanModal');
+  if (intakeScanner){ try { await intakeScanner.stop(); } catch(e){} }
+  if (!issueScanner){
+    try { issueScanner = new Html5Qrcode('qrReaderIssue'); }
+    catch(e){ console.warn('init issue', e); return; }
   }
-  scanBusy = false;
+  issueScanBusy = false;
   try {
-    await scanner.start(
+    await issueScanner.start(
       { facingMode: 'environment' },
       { fps: 10, qrbox: { width: 240, height: 240 } },
-      (text) => onScan(text),
+      (text) => onIssueScan(text),
       () => {}
     );
   } catch(err){
@@ -359,35 +539,98 @@ async function openScanner(){
     toast('Камера недоступна — введите код вручную', 'err');
   }
 }
-async function stopScanner(){
-  if (scanner){ try { await scanner.stop(); } catch(e){} }
+async function stopIssueScanner(){
+  if (issueScanner){ try { await issueScanner.stop(); } catch(e){} }
 }
-async function onScan(text){
-  if (scanBusy) return;
-  scanBusy = true;
-  await stopScanner();
-  closeModal('scanModal');
-  try { await processLookup({ qr: text }); }
+async function onIssueScan(text){
+  if (issueScanBusy) return;
+  issueScanBusy = true;
+  await stopIssueScanner();
+  closeModal('issueScanModal');
+  try { await processIssueLookup({ qr: text }); }
   catch(err){ toast(err.message,'err'); }
-  scanBusy = false;
+  issueScanBusy = false;
 }
-document.getElementById('btnScanClose').onclick = async () => {
-  closeModal('scanModal');
-  await stopScanner();
+
+/* ================= СКАНЕР ПРИЁМКИ ================= */
+let intakeScanner = null, intakeScanBusy = false;
+async function openIntakeScanner(){
+  document.getElementById('intakeCodeInput').value = '';
+  openModal('intakeScanModal');
+  if (issueScanner){ try { await issueScanner.stop(); } catch(e){} }
+  if (!intakeScanner){
+    try { intakeScanner = new Html5Qrcode('qrReaderIntake'); }
+    catch(e){ console.warn('init intake', e); return; }
+  }
+  intakeScanBusy = false;
+  try {
+    await intakeScanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 240, height: 240 } },
+      (text) => onIntakeScan(text),
+      () => {}
+    );
+  } catch(err){
+    console.warn('camera err intake', err);
+    toast('Камера недоступна — введите код вручную', 'err');
+  }
+}
+async function stopIntakeScanner(){
+  if (intakeScanner){ try { await intakeScanner.stop(); } catch(e){} }
+}
+async function onIntakeScan(text){
+  if (intakeScanBusy) return;
+  intakeScanBusy = true;
+  await stopIntakeScanner();
+  closeModal('intakeScanModal');
+  try { await processIntakeLookup(text); }
+  catch(err){ toast(err.message,'err'); }
+  intakeScanBusy = false;
+}
+
+/* ================= ОБРАБОТЧИКИ МОДАЛОК ================= */
+document.getElementById('btnIssueScanClose').onclick = async () => {
+  closeModal('issueScanModal');
+  await stopIssueScanner();
 };
-document.getElementById('btnCodeGo').onclick = async () => {
-  const v = document.getElementById('codeInput').value;
-  closeModal('scanModal');
-  await stopScanner();
-  try { await processLookup({ code: v }); }
+document.getElementById('btnIssueCodeGo').onclick = async () => {
+  const v = document.getElementById('issueCodeInput').value;
+  closeModal('issueScanModal');
+  await stopIssueScanner();
+  try { await processIssueLookup({ code: v }); }
   catch(err){ toast(err.message,'err'); }
 };
-document.getElementById('codeInput').addEventListener('input', e => { e.target.value = digits(e.target.value); });
-document.getElementById('codeInput').addEventListener('keydown', e => {
-  if (e.key==='Enter') document.getElementById('btnCodeGo').click();
+document.getElementById('issueCodeInput').addEventListener('input', e => { e.target.value = digits(e.target.value); });
+document.getElementById('issueCodeInput').addEventListener('keydown', e => {
+  if (e.key==='Enter') document.getElementById('btnIssueCodeGo').click();
 });
 
-/* ================= СТАРТ ================= */
+document.getElementById('btnIntakeScanClose').onclick = async () => {
+  closeModal('intakeScanModal');
+  await stopIntakeScanner();
+};
+document.getElementById('btnIntakeCodeGo').onclick = async () => {
+  const v = document.getElementById('intakeCodeInput').value;
+  closeModal('intakeScanModal');
+  await stopIntakeScanner();
+  try { await processIntakeLookup(v); }
+  catch(err){ toast(err.message,'err'); }
+};
+document.getElementById('intakeCodeInput').addEventListener('input', e => {
+  let v = e.target.value.toLowerCase().replace(/[^a-z0-9]/g,'');
+  if (!v.startsWith('box') && v.length > 0){
+    v = 'box' + v.replace(/\D/g,'');
+  }
+  e.target.value = v.slice(0, 12);
+});
+document.getElementById('intakeCodeInput').addEventListener('keydown', e => {
+  if (e.key==='Enter') document.getElementById('btnIntakeCodeGo').click();
+});
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-close]')) closeModal(e.target.closest('[data-close]').dataset.close);
+});
+
 (function boot(){
   const saved = localStorage.getItem('pvz_session');
   if (saved) subscribe(saved);
