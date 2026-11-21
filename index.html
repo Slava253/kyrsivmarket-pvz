@@ -9,21 +9,26 @@
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:radial-gradient(1000px 700px at 50% -10%,#1a2350,#070b16 70%);color:var(--text);
-  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow:hidden}
+  min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:20px}
 .term{width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);
-  border-radius:24px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.5);position:relative;z-index:2}
-.brand{text-align:center;margin-bottom:22px}
+  border-radius:24px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.5);margin-top:30px}
+.brand{text-align:center;margin-bottom:20px}
 .logo{width:56px;height:56px;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;
   font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));margin-bottom:10px}
 h1{font-size:20px;margin:0 0 4px}
 .muted{color:var(--muted);font-size:13px}
+.paytabs{display:flex;gap:6px;margin-bottom:16px;background:#0a1024;padding:6px;border-radius:14px;border:1px solid var(--border)}
+.paytab{flex:1;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--muted);
+  font-size:14px;font-family:inherit;cursor:pointer;transition:.15s}
+.paytab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
 .input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--border);background:#0f1530;
   color:var(--text);font-size:16px;margin-bottom:12px;font-family:inherit;outline:none}
 .input:focus{border-color:var(--accent)}
 .btn{width:100%;padding:15px;border-radius:12px;border:none;cursor:pointer;font-size:16px;font-weight:700;
   background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:inherit;
-  transition:transform .1s}
+  transition:transform .1s;margin-bottom:8px}
 .btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
 .btn:disabled{opacity:.5;cursor:wait}
 .result{margin-top:16px;padding:16px;border-radius:14px;text-align:center;font-size:15px;display:none;
   animation:resultIn .35s ease}
@@ -32,7 +37,9 @@ h1{font-size:20px;margin:0 0 4px}
 .result.err{background:rgba(255,91,110,.12);border:1px solid var(--err);color:var(--err)}
 .result .big{font-size:22px;font-weight:700;margin-top:6px}
 @keyframes resultIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-
+#qrDisplay{text-align:center;padding:16px;background:#0a1024;border-radius:16px;margin-bottom:12px}
+#qrDisplay canvas{border-radius:12px;background:#fff;max-width:100%;height:auto;display:block;margin:0 auto}
+#qrIdShow{font-family:monospace;font-size:11px;word-break:break-all;color:var(--muted);margin:8px 0}
 /* ===== АНИМАЦИЯ ===== */
 .anim-overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
   pointer-events:none;z-index:9999;animation:animFade 1.5s ease forwards}
@@ -56,14 +63,36 @@ h1{font-size:20px;margin:0 0 4px}
     <h1>Курсив банк</h1>
     <div class="muted">Платёжный терминал</div>
   </div>
-  <input id="cardNumber" class="input" inputmode="numeric" placeholder="Номер карты"/>
-  <input id="amount" class="input" inputmode="decimal" placeholder="Сумма к оплате"/>
-  <button class="btn" id="btnPay">Оплатить</button>
+
+  <div class="paytabs">
+    <button class="paytab active" data-mode="card">Оплата картой</button>
+    <button class="paytab" data-mode="qr">QR-код</button>
+  </div>
+
+  <div id="modeCard">
+    <input id="cardNumber" class="input" inputmode="numeric" placeholder="Номер карты"/>
+    <input id="amount" class="input" inputmode="decimal" placeholder="Сумма к оплате"/>
+    <button class="btn" id="btnPay">Оплатить</button>
+  </div>
+
+  <div id="modeQr" style="display:none">
+    <input id="qrAmount" class="input" inputmode="decimal" placeholder="Сумма"/>
+    <button class="btn" id="btnGenQr">Создать QR</button>
+    <div id="qrDisplay" style="display:none">
+      <canvas id="qrCanvas"></canvas>
+      <div class="muted small" style="margin-top:8px">Код</div>
+      <div id="qrIdShow"></div>
+      <div class="muted small" id="qrStatusText">Ожидание оплаты…</div>
+      <button class="btn ghost" id="btnCancelQr" style="margin-top:12px">Отменить</button>
+    </div>
+  </div>
+
   <div class="result" id="result"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBlZ5ZtyTXgtXxSJAx1jOxwhTrzlHRJmo",
@@ -80,12 +109,15 @@ db.goOnline();
 
 const $ = id => document.getElementById(id);
 const fmt = n => new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(Number(n)||0) + ' ₽';
+const QR_TTL = 5 * 60 * 1000;
 
 function showResult(ok, msg, extra){
   const r = $('result');
   r.className = 'result show ' + (ok ? 'ok' : 'err');
   r.innerHTML = `<div>${msg}</div>${extra ? `<div class="big">${extra}</div>` : ''}`;
 }
+function hideResult(){ $('result').className = 'result'; $('result').innerHTML = ''; }
+function toast(msg){ showResult(false, msg); }
 
 function celebrate(positive, amount, label){
   const el = document.createElement('div');
@@ -99,51 +131,54 @@ function celebrate(positive, amount, label){
   setTimeout(()=>el.remove(), 1600);
 }
 
+/* ===== Переключение режимов ===== */
+document.querySelectorAll('.paytab').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.paytab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const m = btn.dataset.mode;
+    $('modeCard').style.display = m==='card' ? 'block' : 'none';
+    $('modeQr').style.display = m==='qr' ? 'block' : 'none';
+    hideResult();
+    if (m !== 'qr') cancelQr();
+  };
+});
+
+/* ===== Оплата картой ===== */
 async function terminalPay(cardNumber, amountRaw){
   const amount = Math.round((parseFloat(String(amountRaw).replace(',','.'))||0)*100)/100;
   if (!cardNumber) return { ok:false, msg:'Введите номер карты' };
   if (!(amount > 0)) return { ok:false, msg:'Неверная сумма' };
-
-  // 1. Найти владельца карты
   const idx = await db.ref('cards/'+cardNumber).once('value');
   if (!idx.exists()) return { ok:false, msg:'Карта не найдена' };
   const phone = idx.val().phone;
-
-  // 2. Проверить клиента
   const userSnap = await db.ref('users/'+phone).once('value');
   const user = userSnap.val();
   if (!user) return { ok:false, msg:'Клиент не найден' };
   if (user.frozen) return { ok:false, msg:'Аккаунт клиента заморожен' };
   if (!user.cards || !user.cards[cardNumber]) return { ok:false, msg:'Карта неактивна' };
-
-  // 3. Атомарное списание с ОСНОВНОГО СЧЁТА (карта = основной счёт)
   const res = await db.ref('users/'+phone+'/balance').transaction(b => {
     const bal = b || 0;
-    if (bal < amount) return;   // abort
+    if (bal < amount) return;
     return bal - amount;
   });
   if (!res.committed) return { ok:false, msg:'Недостаточно средств' };
-
-  // 4. История клиента
   await db.ref('users/'+phone+'/history').push({
-    type:'terminal', amount, card: cardNumber,
-    note: 'Оплата в терминале', ts: Date.now()
+    type:'terminal', amount, card: cardNumber, note:'Оплата в терминале', ts: Date.now()
   });
-
-  return { ok:true, msg:'Оплата прошла успешно', balance: res.snapshot.val() };
+  return { ok:true, msg:'Оплата прошла успешно', amount };
 }
 
 $('btnPay').onclick = async () => {
   const card = $('cardNumber').value.replace(/\D/g,'');
   const amount = $('amount').value;
-  const parsed = Math.round((parseFloat(String(amount).replace(',','.'))||0)*100)/100;
   $('btnPay').disabled = true;
   $('btnPay').textContent = 'Обработка…';
   try {
     const r = await terminalPay(card, amount);
-    showResult(r.ok, r.msg, r.ok ? 'Списано ' + fmt(parsed) : '');
+    showResult(r.ok, r.msg, r.ok ? 'Списано ' + fmt(r.amount) : '');
     if (r.ok){
-      celebrate(false, parsed, 'Оплата в терминале');
+      celebrate(false, r.amount, 'Оплата в терминале');
       $('amount').value = '';
     }
   } catch(err){
@@ -156,6 +191,70 @@ $('btnPay').onclick = async () => {
 $('cardNumber').addEventListener('input', e => {
   e.target.value = e.target.value.replace(/\D/g,'');
 });
+
+/* ===== QR-оплата ===== */
+let currentQrId = null;
+let qrListener = null;
+let qrExpireTimer = null;
+
+function cancelQr(){
+  if (qrListener && currentQrId){
+    db.ref('qr_payments/'+currentQrId).off('value', qrListener);
+    qrListener = null;
+  }
+  if (qrExpireTimer){ clearTimeout(qrExpireTimer); qrExpireTimer = null; }
+  currentQrId = null;
+  $('qrDisplay').style.display = 'none';
+  $('btnGenQr').style.display = 'block';
+  $('qrAmount').disabled = false;
+}
+
+$('btnCancelQr').onclick = () => { cancelQr(); hideResult(); };
+
+$('btnGenQr').onclick = async () => {
+  const amount = Math.round((parseFloat(String($('qrAmount').value).replace(',','.'))||0)*100)/100;
+  if (!(amount > 0)){ toast('Введите сумму'); return; }
+
+  const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+  await db.ref('qr_payments/'+id).set({ amount, status:'pending', ts: Date.now() });
+
+  currentQrId = id;
+  hideResult();
+
+  new QRious({
+    element: $('qrCanvas'),
+    value: 'cursivpay:' + id,
+    size: 260, background: '#ffffff', foreground: '#0b1020', level: 'M'
+  });
+  $('qrIdShow').textContent = id;
+  $('qrStatusText').textContent = 'Ожидание оплаты…';
+  $('qrDisplay').style.display = 'block';
+  $('btnGenQr').style.display = 'none';
+  $('qrAmount').disabled = true;
+
+  qrListener = db.ref('qr_payments/'+id).on('value', snap => {
+    const p = snap.val();
+    if (p && p.status === 'paid'){
+      db.ref('qr_payments/'+id).off('value', qrListener); qrListener = null;
+      if (qrExpireTimer){ clearTimeout(qrExpireTimer); qrExpireTimer = null; }
+      celebrate(true, p.amount, 'Оплата получена');
+      showResult(true, 'Оплата получена', fmt(p.amount));
+      $('qrStatusText').textContent = '✓ Оплачено';
+      setTimeout(() => { cancelQr(); $('qrAmount').value = ''; }, 2000);
+    }
+  });
+
+  qrExpireTimer = setTimeout(async () => {
+    if (!currentQrId) return;
+    const snap = await db.ref('qr_payments/'+currentQrId).once('value');
+    const p = snap.val();
+    if (p && p.status === 'pending'){
+      await db.ref('qr_payments/'+currentQrId+'/status').set('expired');
+      $('qrStatusText').textContent = '⏱ Время истекло';
+      if (qrListener){ db.ref('qr_payments/'+currentQrId).off('value', qrListener); qrListener = null; }
+    }
+  }, QR_TTL);
+};
 </script>
 </body>
 </html>
