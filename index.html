@@ -7,7 +7,7 @@
 <style>
 :root{--bg:#0b1020;--card:#141b33;--card2:#1b2444;--text:#e8ecff;--muted:#8b95c2;
   --accent:#5b7cff;--accent2:#7c5bff;--ok:#25d18a;--err:#ff5b6e;--warn:#ffc107;
-  --blue:#5b9cff;--border:#26305a}
+  --blue:#5b9cff;--orange:#ff8a00;--border:#26305a}
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
   background:radial-gradient(1200px 800px at 20% -10%, #1a2350, #0b1020 60%);
@@ -16,26 +16,30 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,san
 .header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
 .logo-sm{font-weight:700}
 .logo-sm span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.tabs{display:flex;gap:8px;padding:12px;border-bottom:1px solid var(--border);position:sticky;top:0;
+  background:rgba(11,16,32,.9);backdrop-filter:blur(10px);z-index:10}
+.tabs .tab{flex:1;padding:10px;border-radius:12px;background:var(--card);border:1px solid var(--border);
+  color:var(--muted);cursor:pointer;font-family:inherit;font-size:14px;text-align:center}
+.tabs .tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-color:transparent}
 .content{padding:16px;flex:1;padding-bottom:40px}
 h2{font-size:20px;margin:0 0 12px}
 h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
 .muted{color:var(--muted)} .small{font-size:12px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
-.section{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
-.section-title{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-weight:700;font-size:15px}
-.section-title .pill{font-size:10px;padding:2px 8px;border-radius:999px;font-weight:600;letter-spacing:.4px}
-.pill.issue{background:rgba(37,209,138,.15);color:var(--ok)}
-.pill.intake{background:rgba(91,156,255,.15);color:var(--blue)}
 .input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);
   background:#0f1530;color:var(--text);font-size:15px;margin-bottom:10px;font-family:inherit;outline:none}
 .input:focus{border-color:var(--accent)}
+textarea.input{resize:vertical;min-height:70px;font-family:inherit}
+select.input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%238b95c2' stroke-width='1.5' fill='none'/></svg>");
+  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
 .code-input{letter-spacing:8px;text-align:center;font-size:22px;font-family:monospace}
 .btn{width:100%;padding:13px;border-radius:12px;border:none;cursor:pointer;font-size:15px;font-weight:600;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:inherit;transition:transform .1s}
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:inherit;transition:transform .1s;margin-bottom:8px}
 .btn:active{transform:scale(.98)}
 .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
-.btn.small{width:auto;padding:8px 14px;font-size:13px;border-radius:10px}
+.btn.small{width:auto;padding:8px 14px;font-size:13px;border-radius:10px;margin:0}
 .btn.ok{background:var(--ok)}
+.btn.err{background:var(--err)}
 .btn.blue{background:linear-gradient(135deg,#4b8cff,#6b6bff)}
 .btn:disabled{opacity:.5;cursor:wait}
 .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
@@ -54,52 +58,58 @@ h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
 .modal-head b{font-size:17px}
 .close-btn{background:transparent;border:1px solid var(--border);color:var(--muted);width:32px;height:32px;
   border-radius:10px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
-#qrReaderIssue,#qrReaderIntake{width:100%;min-height:220px;border-radius:14px;overflow:hidden;
+#qrReader{width:100%;min-height:220px;border-radius:14px;overflow:hidden;
   background:#0a1024;border:1px solid var(--border)}
-#qrReaderIssue video,#qrReaderIntake video{border-radius:14px}
-.cell-display{text-align:center;padding:24px;background:linear-gradient(135deg,#243066,#3a2a6e);
-  border-radius:20px;margin-bottom:16px}
-.cell-num{font-size:56px;font-weight:800;color:#fff;line-height:1}
-.cell-label{color:rgba(255,255,255,.7);font-size:13px;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
-.info-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
+#qrReader video{border-radius:14px}
+.cell-display{text-align:center;padding:20px;background:linear-gradient(135deg,#243066,#3a2a6e);
+  border-radius:20px;margin-bottom:14px}
+.cell-num{font-size:48px;font-weight:800;color:#fff;line-height:1}
+.cell-label{color:rgba(255,255,255,.7);font-size:12px;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+.info-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px;align-items:center;gap:12px}
 .info-row span:first-child{color:var(--muted)}
 .hist{display:flex;align-items:center;gap:10px;padding:10px;background:var(--card2);border-radius:10px;margin-bottom:6px;font-size:13px}
-.hist-icon{width:32px;height:32px;border-radius:8px;background:rgba(37,209,138,.15);color:var(--ok);
-  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hist-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.hist-icon.green{background:rgba(37,209,138,.15);color:var(--ok)}
 .hist-icon.blue{background:rgba(91,156,255,.15);color:var(--blue)}
+.hist-icon.orange{background:rgba(255,138,0,.15);color:var(--orange)}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:12px;
   background:var(--card2);border:1px solid var(--border);font-size:14px;z-index:9999;animation:up .2s;max-width:90vw}
 .toast.ok{border-color:var(--ok)} .toast.err{border-color:var(--err)}
 @keyframes up{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+.queue-item{display:flex;gap:12px;padding:12px;background:var(--card2);border:1px solid var(--border);
+  border-radius:14px;margin-bottom:8px;cursor:pointer;transition:.15s}
+.queue-item:hover{border-color:var(--accent)}
+.queue-cell{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#243066,#3a2a6e);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0}
+.queue-cell-num{font-size:22px;font-weight:800;line-height:1}
+.queue-cell-lbl{font-size:8px;color:rgba(255,255,255,.7);letter-spacing:.5px;margin-top:2px}
+.queue-body{flex:1;min-width:0}
+.queue-client{font-weight:600;font-size:14px}
+.queue-meta{color:var(--muted);font-size:12px;margin-top:2px}
+.queue-actions{display:flex;flex-direction:column;gap:4px;justify-content:center}
+.queue-actions .btn{width:auto;padding:6px 10px;font-size:12px;margin:0}
+.hint-box{padding:12px;border-radius:12px;background:rgba(91,156,255,.08);
+  border:1px dashed rgba(91,156,255,.3);font-size:13px;color:#a5b8ff;margin-top:10px}
 </style>
 </head>
 <body>
 <div class="wrap" id="root"></div>
 
-<div id="issueScanModal" class="modal">
+<!-- Универсальный сканер -->
+<div id="scanModal" class="modal">
   <div class="modal-body">
-    <div class="modal-head"><b>Сканировать QR клиента</b>
-      <button class="close-btn" id="btnIssueScanClose">✕</button></div>
-    <div id="qrReaderIssue"></div>
-    <p class="muted small" style="text-align:center;margin:14px 0 8px">или введите 6-значный код</p>
-    <input id="issueCodeInput" class="input code-input" inputmode="numeric" maxlength="6" placeholder="000000"/>
-    <button class="btn" id="btnIssueCodeGo">Найти заказ</button>
+    <div class="modal-head"><b id="scanTitle">Сканировать</b>
+      <button class="close-btn" id="btnScanClose">✕</button></div>
+    <div id="qrReader"></div>
+    <p class="muted small" style="text-align:center;margin:14px 0 8px" id="scanHint">или введите код</p>
+    <input id="scanInput" class="input" placeholder="" autocomplete="off"/>
+    <button class="btn" id="btnScanManualGo">Продолжить</button>
   </div>
 </div>
 
-<div id="intakeScanModal" class="modal">
-  <div class="modal-body">
-    <div class="modal-head"><b>Сканировать QR коробки</b>
-      <button class="close-btn" id="btnIntakeScanClose">✕</button></div>
-    <div id="qrReaderIntake"></div>
-    <p class="muted small" style="text-align:center;margin:14px 0 8px">или введите код коробки</p>
-    <input id="intakeCodeInput" class="input" placeholder="box000000000" autocomplete="off"/>
-    <button class="btn blue" id="btnIntakeCodeGo">Принять коробку</button>
-  </div>
-</div>
-
-<div id="resultModal" class="modal">
-  <div class="modal-body" id="resultBody"></div>
+<!-- Универсальный confirm-модал -->
+<div id="confirmModal" class="modal">
+  <div class="modal-body" id="confirmBody"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -137,6 +147,7 @@ function statusLabel(s){
   if (s === 'pending' || s === 'transit') return 'В пути';
   if (s === 'ready') return 'Готов к выдаче';
   if (s === 'issued') return 'Выдан';
+  if (s === 'returned') return 'Возвращён';
   return s || '—';
 }
 function getPvzCity(pvz){
@@ -146,8 +157,17 @@ function getPvzCity(pvz){
   return parts[0] ? parts[0].trim() : '';
 }
 
-const state = { pvzId: null, pvz: null, recent: {}, intakeRecent: {}, scanResult: null, intakeResult: null, pvzOrders: {} };
-let unsubPvz = null, unsubRecent = null, unsubIntakeRecent = null, unsubOrders = null;
+/* ================= СОСТОЯНИЕ ================= */
+const state = {
+  pvzId: null, pvz: null, tab: 'issue',
+  recentIssued: {}, recentIntake: {}, recentReturns: {},
+  pvzOrders: {},
+  activeOrders: {},   // очередь в работе (localStorage)
+  scanMode: 'issue',  // 'issue' | 'intake'
+  confirmType: null,  // 'queue' | 'return'
+  confirmData: null,
+};
+let unsubPvz = null, unsubIssued = null, unsubIntake = null, unsubReturns = null, unsubOrders = null;
 let renderPending = false;
 function renderSoon(){
   if (renderPending) return;
@@ -155,6 +175,41 @@ function renderSoon(){
   requestAnimationFrame(()=>{ renderPending = false; render(); });
 }
 
+/* ================= ОЧЕРЕДЬ (localStorage) ================= */
+function queueKey(){ return 'pvz_queue_' + state.pvzId; }
+function loadQueue(){
+  try {
+    const raw = localStorage.getItem(queueKey());
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return {};
+    return parsed;
+  } catch(e){ return {}; }
+}
+function saveQueue(){
+  try { localStorage.setItem(queueKey(), JSON.stringify(state.activeOrders)); } catch(e){}
+}
+function addToQueue(orderId, phone, order){
+  if (state.activeOrders[orderId]){
+    toast('Заказ уже в списке в работе', 'err');
+    return false;
+  }
+  state.activeOrders[orderId] = {
+    orderId, phone,
+    code6: order.code6, cell: order.cell,
+    items: order.items || [], total: order.total || 0,
+    addedAt: Date.now()
+  };
+  saveQueue();
+  return true;
+}
+function removeFromQueue(orderId){
+  delete state.activeOrders[orderId];
+  saveQueue();
+}
+function queueCount(){ return Object.keys(state.activeOrders).length; }
+
+/* ================= АВТОРИЗАЦИЯ ================= */
 function renderLogin(){
   document.getElementById('root').innerHTML = `
     <div class="login-wrap"><div class="panel">
@@ -193,10 +248,13 @@ function renderLogin(){
 
 function subscribe(pvzId){
   state.pvzId = pvzId;
-  if (unsubPvz){ try { unsubPvz(); } catch(e){ console.warn(e); } unsubPvz = null; }
-  if (unsubRecent){ try { unsubRecent(); } catch(e){ console.warn(e); } unsubRecent = null; }
-  if (unsubIntakeRecent){ try { unsubIntakeRecent(); } catch(e){ console.warn(e); } unsubIntakeRecent = null; }
-  if (unsubOrders){ try { unsubOrders(); } catch(e){ console.warn(e); } unsubOrders = null; }
+  if (unsubPvz){ try { unsubPvz(); } catch(e){} unsubPvz = null; }
+  if (unsubIssued){ try { unsubIssued(); } catch(e){} unsubIssued = null; }
+  if (unsubIntake){ try { unsubIntake(); } catch(e){} unsubIntake = null; }
+  if (unsubReturns){ try { unsubReturns(); } catch(e){} unsubReturns = null; }
+  if (unsubOrders){ try { unsubOrders(); } catch(e){} unsubOrders = null; }
+
+  state.activeOrders = loadQueue();
 
   const pvzRef = db.ref('pvz/'+pvzId);
   const pvzCb = snap => {
@@ -207,25 +265,40 @@ function subscribe(pvzId){
   pvzRef.on('value', pvzCb);
   unsubPvz = () => pvzRef.off('value', pvzCb);
 
-  const recentRef = db.ref('pvzIssued/'+pvzId);
-  const recentCb = snap => { state.recent = snap.val() || {}; renderSoon(); };
-  recentRef.on('value', recentCb);
-  unsubRecent = () => recentRef.off('value', recentCb);
+  const issuedRef = db.ref('pvzIssued/'+pvzId);
+  const issuedCb = snap => { state.recentIssued = snap.val() || {}; renderSoon(); };
+  issuedRef.on('value', issuedCb);
+  unsubIssued = () => issuedRef.off('value', issuedCb);
 
   const intakeRef = db.ref('pvzIntake/'+pvzId);
-  const intakeCb = snap => { state.intakeRecent = snap.val() || {}; renderSoon(); };
+  const intakeCb = snap => { state.recentIntake = snap.val() || {}; renderSoon(); };
   intakeRef.on('value', intakeCb);
-  unsubIntakeRecent = () => intakeRef.off('value', intakeCb);
+  unsubIntake = () => intakeRef.off('value', intakeCb);
 
-  // Заказы этого ПВЗ (для контроля, что в приёмке только его коробки)
+  const returnsRef = db.ref('pvzReturns/'+pvzId);
+  const returnsCb = snap => { state.recentReturns = snap.val() || {}; renderSoon(); };
+  returnsRef.on('value', returnsCb);
+  unsubReturns = () => returnsRef.off('value', returnsCb);
+
   const ordersRef = db.ref('orderIndex');
   const ordersCb = snap => {
     const all = snap.val() || {};
     const filtered = {};
-    for (const [id, o] of Object.entries(all)){
-      if (o.pvzId === pvzId) filtered[id] = o;
-    }
+    for (const [id, o] of Object.entries(all)) if (o.pvzId === pvzId) filtered[id] = o;
     state.pvzOrders = filtered;
+    // авто-очистка очереди от заказов, которые больше не ready
+    let changed = false;
+    for (const id of Object.keys(state.activeOrders)){
+      const o = filtered[id];
+      if (!o || o.status !== 'ready'){
+        // Если заказ исчез — убираем. Если статус сменился — тоже убираем, чтобы не сбивать с толку.
+        if (!state.activeOrders[id].keepOnStatusChange){
+          delete state.activeOrders[id];
+          changed = true;
+        }
+      }
+    }
+    if (changed) saveQueue();
     renderSoon();
   };
   ordersRef.on('value', ordersCb);
@@ -233,18 +306,21 @@ function subscribe(pvzId){
 }
 
 function logout(){
-  if (unsubPvz){ try { unsubPvz(); } catch(e){ console.warn(e); } unsubPvz = null; }
-  if (unsubRecent){ try { unsubRecent(); } catch(e){ console.warn(e); } unsubRecent = null; }
-  if (unsubIntakeRecent){ try { unsubIntakeRecent(); } catch(e){ console.warn(e); } unsubIntakeRecent = null; }
-  if (unsubOrders){ try { unsubOrders(); } catch(e){ console.warn(e); } unsubOrders = null; }
+  if (unsubPvz){ try { unsubPvz(); } catch(e){} unsubPvz = null; }
+  if (unsubIssued){ try { unsubIssued(); } catch(e){} unsubIssued = null; }
+  if (unsubIntake){ try { unsubIntake(); } catch(e){} unsubIntake = null; }
+  if (unsubReturns){ try { unsubReturns(); } catch(e){} unsubReturns = null; }
+  if (unsubOrders){ try { unsubOrders(); } catch(e){} unsubOrders = null; }
 
   localStorage.removeItem('pvz_session');
-  state.pvzId = null; state.pvz = null; state.recent = {}; state.intakeRecent = {};
-  state.scanResult = null; state.intakeResult = null; state.pvzOrders = {};
+  state.pvzId = null; state.pvz = null;
+  state.recentIssued = {}; state.recentIntake = {}; state.recentReturns = {};
+  state.pvzOrders = {}; state.activeOrders = {};
+  state.confirmType = null; state.confirmData = null;
   render();
 }
 
-/* ================= ВЫДАЧА ================= */
+/* ================= ПОИСК ЗАКАЗОВ ================= */
 async function findOrderByQr(qrText){
   const orderId = String(qrText||'').trim().replace(/^mkt:/i, '').replace(/%3A/gi, ':').trim();
   if (!orderId) throw new Error('Пустой QR-код');
@@ -265,82 +341,8 @@ async function findOrderByCode(code6){
   if (!oSnap.exists()) throw new Error('Заказ не найден');
   return { orderId, phone, order: oSnap.val() };
 }
-
-async function processIssueLookup(input){
-  let result;
-  if (input.qr) result = await findOrderByQr(input.qr);
-  else if (input.code) result = await findOrderByCode(input.code);
-  else throw new Error('Нет данных');
-  if (result.order.status === 'issued') throw new Error('Заказ уже выдан');
-  if (result.order.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
-  const st = result.order.status;
-  if (st !== 'ready' && st !== 'pending'){
-    throw new Error('Заказ ещё не принят на ПВЗ. Сначала отсканируйте коробку во вкладке «Приёмка»');
-  }
-  state.scanResult = result;
-  renderIssueResult(result);
-  openModal('resultModal');
-}
-
-async function issueOrder(orderId, phone, code6){
-  const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
-  if (!oSnap.exists()) throw new Error('Заказ не найден');
-  const o = oSnap.val();
-  if (o.status === 'issued') throw new Error('Заказ уже выдан');
-  if (o.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
-  const updates = {};
-  updates['users/'+phone+'/orders/'+orderId+'/status'] = 'issued';
-  updates['users/'+phone+'/orders/'+orderId+'/issuedAt'] = Date.now();
-  updates['users/'+phone+'/orders/'+orderId+'/issuedBy'] = state.pvzId;
-  updates['orderIndex/'+orderId+'/status'] = 'issued';
-  updates['codeIndex/'+code6] = null;
-  updates['pvzIssued/'+state.pvzId+'/'+orderId] = {
-    phone, code6, cell: o.cell, issuedAt: Date.now()
-  };
-  await db.ref().update(updates);
-}
-
-function renderIssueResult({ orderId, phone, order }){
-  document.getElementById('resultBody').innerHTML = `
-    <div class="modal-head"><b>Заказ найден</b>
-      <button class="close-btn" id="btnResClose">✕</button></div>
-    <div class="cell-display">
-      <div class="cell-label">Ячейка</div>
-      <div class="cell-num">${order.cell}</div>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <div class="muted small" style="margin-bottom:6px">Состав заказа</div>
-      ${order.items.map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji} ${esc(i.name)} ×${i.qty}</div>`).join('')}
-      <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <span class="muted">Итого</span><b>${fmt(order.total)}</b>
-      </div>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <div class="info-row"><span>Клиент</span><b>${esc(phone)}</b></div>
-      <div class="info-row"><span>Код</span><b>${order.code6}</b></div>
-    </div>
-    <button class="btn ok" id="btnIssue">Выдать заказ</button>
-  `;
-  document.getElementById('btnResClose').onclick = () => {
-    state.scanResult = null; closeModal('resultModal');
-  };
-  document.getElementById('btnIssue').onclick = async () => {
-    if (!state.scanResult) return;
-    const btn = document.getElementById('btnIssue');
-    btn.disabled = true; btn.textContent = 'Выдаём…';
-    try {
-      await issueOrder(state.scanResult.orderId, state.scanResult.phone, state.scanResult.order.code6);
-      toast('Заказ выдан', 'ok');
-      state.scanResult = null;
-      closeModal('resultModal');
-    } catch(err){ toast(err.message,'err'); }
-    btn.disabled = false; btn.textContent = 'Выдать заказ';
-  };
-}
-
-/* ================= ПРИЁМКА ================= */
 async function findOrderByBox(boxCode){
-  const code = String(boxCode||'').trim();
+  const code = String(boxCode||'').trim().toLowerCase();
   if (!/^box\d{9}$/.test(code)) throw new Error('Неверный формат. Ожидается box + 9 цифр');
   const idx = await db.ref('boxIndex/'+code).once('value');
   if (!idx.exists()) throw new Error('Коробка не найдена');
@@ -351,16 +353,25 @@ async function findOrderByBox(boxCode){
   return { orderId: data.orderId, phone: data.phone, order: oSnap.val(), boxCode: code };
 }
 
-async function processIntakeLookup(boxCode){
-  const result = await findOrderByBox(boxCode);
-  if (result.order.status === 'ready') throw new Error('Коробка уже принята');
-  if (result.order.status === 'issued') throw new Error('Заказ уже выдан клиенту');
-  if (result.order.status !== 'transit' && result.order.status !== 'pending'){
-    throw new Error('Заказ в недопустимом статусе');
-  }
-  state.intakeResult = result;
-  renderIntakeResult(result);
-  openModal('resultModal');
+/* ================= ОПЕРАЦИИ ================= */
+async function issueOrder(orderId, phone){
+  const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
+  if (!oSnap.exists()) throw new Error('Заказ не найден');
+  const o = oSnap.val();
+  if (o.status === 'issued') throw new Error('Заказ уже выдан');
+  if (o.status === 'returned') throw new Error('Заказ возвращён');
+  if (o.status !== 'ready') throw new Error('Нельзя выдать: статус «' + statusLabel(o.status) + '»');
+  if (o.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
+  const updates = {};
+  updates['users/'+phone+'/orders/'+orderId+'/status'] = 'issued';
+  updates['users/'+phone+'/orders/'+orderId+'/issuedAt'] = Date.now();
+  updates['users/'+phone+'/orders/'+orderId+'/issuedBy'] = state.pvzId;
+  updates['orderIndex/'+orderId+'/status'] = 'issued';
+  updates['codeIndex/'+o.code6] = null;
+  updates['pvzIssued/'+state.pvzId+'/'+orderId] = {
+    phone, code6: o.code6, cell: o.cell, issuedAt: Date.now()
+  };
+  await db.ref().update(updates);
 }
 
 async function receiveOrder(orderId, phone, boxCode){
@@ -368,7 +379,7 @@ async function receiveOrder(orderId, phone, boxCode){
   if (!oSnap.exists()) throw new Error('Заказ не найден');
   const o = oSnap.val();
   if (o.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
-  if (o.status === 'ready' || o.status === 'issued') throw new Error('Заказ уже принят');
+  if (o.status !== 'transit' && o.status !== 'pending') throw new Error('Заказ в недопустимом статусе: ' + statusLabel(o.status));
   const updates = {};
   updates['users/'+phone+'/orders/'+orderId+'/status'] = 'ready';
   updates['users/'+phone+'/orders/'+orderId+'/receivedAt'] = Date.now();
@@ -379,159 +390,286 @@ async function receiveOrder(orderId, phone, boxCode){
   await db.ref().update(updates);
 }
 
-function renderIntakeResult({ orderId, phone, order, boxCode }){
-  document.getElementById('resultBody').innerHTML = `
-    <div class="modal-head"><b>Получена коробка</b>
-      <button class="close-btn" id="btnResClose">✕</button></div>
+async function returnOrder(orderId, phone, reason){
+  reason = String(reason||'').trim();
+  if (reason.length < 3) throw new Error('Укажите причину возврата (минимум 3 символа)');
+  const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
+  if (!oSnap.exists()) throw new Error('Заказ не найден');
+  const o = oSnap.val();
+  if (o.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
+  if (o.status === 'returned') throw new Error('Заказ уже возвращён');
+  if (o.status !== 'issued' && o.status !== 'ready')
+    throw new Error('Возврат возможен только для готовых или выданных заказов');
+  const updates = {};
+  updates['users/'+phone+'/orders/'+orderId+'/status'] = 'returned';
+  updates['users/'+phone+'/orders/'+orderId+'/returnReason'] = reason;
+  updates['users/'+phone+'/orders/'+orderId+'/returnedAt'] = Date.now();
+  updates['users/'+phone+'/orders/'+orderId+'/returnedBy'] = state.pvzId;
+  updates['orderIndex/'+orderId+'/status'] = 'returned';
+  updates['orderIndex/'+orderId+'/returnReason'] = reason;
+  updates['pvzReturns/'+state.pvzId+'/'+orderId] = {
+    phone, code6: o.code6, cell: o.cell, reason, returnedAt: Date.now()
+  };
+  await db.ref().update(updates);
+  // убираем из очереди, если был
+  removeFromQueue(orderId);
+}
+
+/* ================= ЛОГИКА СКАНА ================= */
+async function handleIssueLookup(input){
+  let result;
+  if (input.qr) result = await findOrderByQr(input.qr);
+  else if (input.code) result = await findOrderByCode(input.code);
+  else throw new Error('Нет данных');
+  if (result.order.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
+
+  if (result.order.status === 'issued'){
+    // Уже выдан — значит возврат
+    openReturnForm(result);
+    return;
+  }
+  if (result.order.status === 'returned') throw new Error('Заказ уже возвращён');
+  if (result.order.status === 'transit' || result.order.status === 'pending')
+    throw new Error('Заказ ещё не поступил в ПВЗ. Примите коробку во вкладке «Приёмка»');
+  if (result.order.status !== 'ready') throw new Error('Неизвестный статус: ' + statusLabel(result.order.status));
+
+  // ready → в очередь
+  const added = addToQueue(result.orderId, result.phone, result.order);
+  render();
+  if (added) toast('Добавлен в работу · ячейка ' + result.order.cell, 'ok');
+}
+
+async function handleIntakeLookup(boxCode){
+  const result = await findOrderByBox(boxCode);
+  if (result.order.status === 'ready') throw new Error('Коробка уже принята');
+  if (result.order.status === 'issued') throw new Error('Заказ уже выдан');
+  if (result.order.status === 'returned') throw new Error('Заказ возвращён');
+  if (result.order.status !== 'transit' && result.order.status !== 'pending')
+    throw new Error('Заказ в недопустимом статусе');
+  showReceiveConfirm(result);
+}
+
+/* ================= CONFIRM-МОДАЛ ================= */
+function openConfirm(type, data){
+  state.confirmType = type;
+  state.confirmData = data;
+  renderConfirm();
+  openModal('confirmModal');
+}
+function closeConfirm(){
+  state.confirmType = null;
+  state.confirmData = null;
+  closeModal('confirmModal');
+}
+function renderConfirm(){
+  const body = document.getElementById('confirmBody');
+  const t = state.confirmType;
+  if (t === 'queue') renderQueueConfirm(body, state.confirmData);
+  else if (t === 'return') renderReturnConfirm(body, state.confirmData);
+  else if (t === 'receive') renderReceiveConfirm(body, state.confirmData);
+}
+
+function renderQueueConfirm(body, data){
+  const { orderId } = data;
+  const item = state.activeOrders[orderId];
+  if (!item){ closeConfirm(); return; }
+  body.innerHTML = `
+    <div class="modal-head"><b>Заказ в работе</b>
+      <button class="close-btn" id="btnConfirmClose">✕</button></div>
     <div class="cell-display">
-      <div class="cell-label">Положить в ячейку</div>
-      <div class="cell-num">${order.cell}</div>
+      <div class="cell-label">Ячейка</div>
+      <div class="cell-num">${item.cell}</div>
     </div>
     <div class="card" style="margin-bottom:12px">
-      <div class="muted small" style="margin-bottom:6px">Состав</div>
-      ${order.items.map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji} ${esc(i.name)} ×${i.qty}</div>`).join('')}
+      <div class="muted small" style="margin-bottom:6px">Состав заказа</div>
+      ${(item.items||[]).map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji||''} ${esc(i.name||'')} ×${i.qty||1}</div>`).join('')}
+      <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <span class="muted">Итого</span><b>${fmt(item.total)}</b>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="info-row"><span>Клиент</span><b>${esc(item.phone)}</b></div>
+      <div class="info-row"><span>Код получения</span><b>${item.code6}</b></div>
+    </div>
+    <button class="btn ok" id="btnQueueIssue">Выдать заказ</button>
+    <button class="btn err" id="btnQueueReturn" style="margin-top:4px">Оформить возврат</button>
+    <button class="btn ghost" id="btnQueueDrop" style="margin-top:4px">Убрать из списка</button>
+  `;
+  document.getElementById('btnConfirmClose').onclick = closeConfirm;
+  document.getElementById('btnQueueIssue').onclick = async () => {
+    const btn = document.getElementById('btnQueueIssue');
+    btn.disabled = true; btn.textContent = 'Выдаём…';
+    try {
+      await issueOrder(orderId, item.phone);
+      removeFromQueue(orderId);
+      toast('Заказ выдан клиенту', 'ok');
+      closeConfirm();
+    } catch(err){
+      toast(err.message, 'err');
+      // если заказ уже не ready — убираем
+      if (/уже выдан|возвращён|статус/i.test(err.message)){
+        removeFromQueue(orderId);
+        closeConfirm();
+      }
+      btn.disabled = false; btn.textContent = 'Выдать заказ';
+    }
+  };
+  document.getElementById('btnQueueReturn').onclick = async () => {
+    // перепроверяем актуальный заказ
+    try {
+      const oSnap = await db.ref('users/'+item.phone+'/orders/'+orderId).once('value');
+      if (!oSnap.exists()) throw new Error('Заказ не найден');
+      const o = oSnap.val();
+      if (o.status !== 'ready' && o.status !== 'issued')
+        throw new Error('Возврат возможен только для готовых или выданных заказов');
+      openConfirm('return', { orderId, phone: item.phone, order: o });
+    } catch(err){ toast(err.message, 'err'); }
+  };
+  document.getElementById('btnQueueDrop').onclick = () => {
+    removeFromQueue(orderId);
+    toast('Убрано из списка', 'ok');
+    closeConfirm();
+  };
+}
+
+function openReturnForm(result){
+  openConfirm('return', result);
+}
+
+function renderReturnConfirm(body, data){
+  const { orderId, phone, order } = data;
+  body.innerHTML = `
+    <div class="modal-head"><b>Оформление возврата</b>
+      <button class="close-btn" id="btnConfirmClose">✕</button></div>
+    <div class="cell-display">
+      <div class="cell-label">Ячейка</div>
+      <div class="cell-num">${order.cell||'—'}</div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="muted small" style="margin-bottom:6px">Состав заказа</div>
+      ${(order.items||[]).map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji||''} ${esc(i.name||'')} ×${i.qty||1}</div>`).join('')}
+      <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <span class="muted">Итого</span><b>${fmt(order.total||0)}</b>
+      </div>
     </div>
     <div class="card" style="margin-bottom:12px">
       <div class="info-row"><span>Клиент</span><b>${esc(phone)}</b></div>
-      <div class="info-row"><span>Код получения</span><b>${order.code6}</b></div>
+      <div class="info-row"><span>Код</span><b>${order.code6||'—'}</b></div>
+      <div class="info-row"><span>Статус</span><b>${statusLabel(order.status)}</b></div>
+    </div>
+    <label class="muted small" style="display:block;margin-bottom:6px">Причина возврата *</label>
+    <select id="returnReason" class="input">
+      <option value="">— Выберите причину —</option>
+      <option>Брак товара</option>
+      <option>Не подошёл товар</option>
+      <option>Не соответствует описанию</option>
+      <option>Повреждён при доставке</option>
+      <option>Отказ клиента</option>
+      <option value="__other">Другое (свой вариант)</option>
+    </select>
+    <textarea id="returnReasonOther" class="input" placeholder="Опишите причину" style="display:none"></textarea>
+    <button class="btn err" id="btnDoReturn">Оформить возврат</button>
+    <button class="btn ghost" id="btnCancelReturn">Отмена</button>
+  `;
+  const sel = document.getElementById('returnReason');
+  const other = document.getElementById('returnReasonOther');
+  sel.onchange = () => {
+    other.style.display = sel.value === '__other' ? 'block' : 'none';
+    if (sel.value === '__other') other.focus();
+  };
+  document.getElementById('btnConfirmClose').onclick = closeConfirm;
+  document.getElementById('btnCancelReturn').onclick = closeConfirm;
+  document.getElementById('btnDoReturn').onclick = async () => {
+    let reason = sel.value === '__other' ? other.value : sel.value;
+    reason = String(reason||'').trim();
+    if (!reason){ toast('Выберите или введите причину', 'err'); return; }
+    const btn = document.getElementById('btnDoReturn');
+    btn.disabled = true; btn.textContent = 'Оформляем…';
+    try {
+      await returnOrder(orderId, phone, reason);
+      toast('Возврат оформлен', 'ok');
+      closeConfirm();
+    } catch(err){
+      toast(err.message, 'err');
+      btn.disabled = false; btn.textContent = 'Оформить возврат';
+    }
+  };
+}
+
+function showReceiveConfirm(result){
+  openConfirm('receive', result);
+}
+
+function renderReceiveConfirm(body, data){
+  const { orderId, phone, order, boxCode } = data;
+  body.innerHTML = `
+    <div class="modal-head"><b>Приёмка коробки</b>
+      <button class="close-btn" id="btnConfirmClose">✕</button></div>
+    <div class="cell-display">
+      <div class="cell-label">Положить в ячейку</div>
+      <div class="cell-num">${order.cell||'—'}</div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="muted small" style="margin-bottom:6px">Состав</div>
+      ${(order.items||[]).map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji||''} ${esc(i.name||'')} ×${i.qty||1}</div>`).join('')}
+    </div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="info-row"><span>Клиент</span><b>${esc(phone)}</b></div>
+      <div class="info-row"><span>Код получения</span><b>${order.code6||'—'}</b></div>
       <div class="info-row"><span>Коробка</span><b>${esc(boxCode)}</b></div>
     </div>
-    <button class="btn blue" id="btnReceive">Подтвердить приёмку</button>
+    <button class="btn blue" id="btnDoReceive">Подтвердить приёмку</button>
+    <button class="btn ghost" id="btnCancelReceive">Отмена</button>
   `;
-  document.getElementById('btnResClose').onclick = () => {
-    state.intakeResult = null; closeModal('resultModal');
-  };
-  document.getElementById('btnReceive').onclick = async () => {
-    if (!state.intakeResult) return;
-    const btn = document.getElementById('btnReceive');
+  document.getElementById('btnConfirmClose').onclick = closeConfirm;
+  document.getElementById('btnCancelReceive').onclick = closeConfirm;
+  document.getElementById('btnDoReceive').onclick = async () => {
+    const btn = document.getElementById('btnDoReceive');
     btn.disabled = true; btn.textContent = 'Принимаем…';
     try {
-      await receiveOrder(state.intakeResult.orderId, state.intakeResult.phone, state.intakeResult.boxCode);
-      toast('Коробка принята. Клиент уведомлён', 'ok');
-      state.intakeResult = null;
-      closeModal('resultModal');
-    } catch(err){ toast(err.message,'err'); }
-    btn.disabled = false; btn.textContent = 'Подтвердить приёмку';
-  };
-}
-
-/* ================= РЕНДЕР ================= */
-function render(){
-  if (!state.pvzId || !state.pvz){ renderLogin(); return; }
-  const pvz = state.pvz;
-  const recentList = Object.values(state.recent).sort((a,b)=>b.issuedAt-a.issuedAt).slice(0, 5);
-  const intakeList = Object.values(state.intakeRecent).sort((a,b)=>b.receivedAt-a.receivedAt).slice(0, 5);
-
-  document.getElementById('root').innerHTML = `
-    <div class="header">
-      <div class="logo-sm">Курсив <span>ПВЗ</span></div>
-      <button class="btn ghost small" id="btnLogout">Выйти</button>
-    </div>
-    <div class="content">
-      <h2>${esc(pvz.name)}</h2>
-      <div class="card">
-        <div class="info-row"><span>Город</span><b>${esc(getPvzCity(pvz)||'—')}</b></div>
-        <div class="info-row"><span>Адрес</span><b style="text-align:right;max-width:60%">${esc(pvz.address)}</b></div>
-        <div class="info-row"><span>График</span><b>${esc(pvz.schedule||'—')}</b></div>
-        <div class="info-row"><span>Логин</span><b>${esc(pvz.login||'—')}</b></div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">
-          <span>Выдача клиенту</span>
-          <span class="pill issue">QR клиента / код</span>
-        </div>
-        <p class="muted small" style="margin:0 0 12px">Отсканируйте QR клиента или введите 6-значный код</p>
-        <button class="btn" id="btnIssueScan">📷 Сканировать QR клиента</button>
-        <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите код вручную</div>
-        <input id="inlineIssueCode" class="input code-input" inputmode="numeric" maxlength="6" placeholder="000000"/>
-        <button class="btn ghost" id="btnInlineIssueGo">Найти заказ</button>
-      </div>
-
-      <div class="section">
-        <div class="section-title">
-          <span>Приёмка коробок</span>
-          <span class="pill intake">box + 9 цифр</span>
-        </div>
-        <p class="muted small" style="margin:0 0 12px">Отсканируйте QR коробки от поставщика или введите код</p>
-        <button class="btn blue" id="btnIntakeScan">📦 Сканировать QR коробки</button>
-        <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите код коробки</div>
-        <input id="inlineIntakeCode" class="input" placeholder="box000000000" autocomplete="off"/>
-        <button class="btn ghost" id="btnInlineIntakeGo">Принять коробку</button>
-      </div>
-
-      ${intakeList.length ? `<div class="card">
-        <h3>Недавно принято</h3>
-        ${intakeList.map(r=>`
-          <div class="hist">
-            <div class="hist-icon blue">📦</div>
-            <div style="flex:1">
-              <div><b>Ячейка ${r.cell}</b> · ${esc(r.boxCode)}</div>
-              <div class="muted small">${esc(r.phone)} · ${new Date(r.receivedAt).toLocaleString('ru-RU')}</div>
-            </div>
-          </div>`).join('')}
-      </div>` : ''}
-
-      ${recentList.length ? `<div class="card">
-        <h3>Недавно выдано</h3>
-        ${recentList.map(r=>`
-          <div class="hist">
-            <div class="hist-icon">✓</div>
-            <div style="flex:1">
-              <div><b>Ячейка ${r.cell}</b> · код ${r.code6}</div>
-              <div class="muted small">${esc(r.phone)} · ${new Date(r.issuedAt).toLocaleString('ru-RU')}</div>
-            </div>
-          </div>`).join('')}
-      </div>` : ''}
-    </div>
-  `;
-  document.getElementById('btnLogout').onclick = logout;
-
-  document.getElementById('btnIssueScan').onclick = openIssueScanner;
-  document.getElementById('btnIntakeScan').onclick = openIntakeScanner;
-
-  document.getElementById('inlineIssueCode').addEventListener('input', e => { e.target.value = digits(e.target.value); });
-  document.getElementById('inlineIssueCode').addEventListener('keydown', e => {
-    if (e.key==='Enter') document.getElementById('btnInlineIssueGo').click();
-  });
-  document.getElementById('btnInlineIssueGo').onclick = async () => {
-    try { await processIssueLookup({ code: document.getElementById('inlineIssueCode').value }); }
-    catch(err){ toast(err.message,'err'); }
-  };
-
-  document.getElementById('inlineIntakeCode').addEventListener('input', e => {
-    let v = e.target.value.toLowerCase().replace(/[^a-z0-9]/g,'');
-    if (!v.startsWith('box') && v.length > 0){
-      // если начали с цифр — добавим box
-      v = 'box' + v.replace(/\D/g,'');
+      await receiveOrder(orderId, phone, boxCode);
+      toast('Коробка принята. Заказ готов к выдаче', 'ok');
+      closeConfirm();
+    } catch(err){
+      toast(err.message, 'err');
+      btn.disabled = false; btn.textContent = 'Подтвердить приёмку';
     }
-    e.target.value = v.slice(0, 12);
-  });
-  document.getElementById('inlineIntakeCode').addEventListener('keydown', e => {
-    if (e.key==='Enter') document.getElementById('btnInlineIntakeGo').click();
-  });
-  document.getElementById('btnInlineIntakeGo').onclick = async () => {
-    try { await processIntakeLookup(document.getElementById('inlineIntakeCode').value); }
-    catch(err){ toast(err.message,'err'); }
   };
 }
 
-/* ================= СКАНЕР ВЫДАЧИ ================= */
-let issueScanner = null, issueScanBusy = false;
-async function openIssueScanner(){
-  document.getElementById('issueCodeInput').value = '';
-  openModal('issueScanModal');
-  if (intakeScanner){ try { await intakeScanner.stop(); } catch(e){} }
-  if (!issueScanner){
-    try { issueScanner = new Html5Qrcode('qrReaderIssue'); }
-    catch(e){ console.warn('init issue', e); return; }
+/* ================= СКАНЕР ================= */
+let scanner = null, scanBusy = false;
+async function openScanner(mode){
+  state.scanMode = mode;
+  const title = mode === 'issue' ? 'Сканировать заказ клиента' : 'Сканировать QR коробки';
+  const hint = mode === 'issue' ? 'или введите 6-значный код' : 'или введите код коробки';
+  document.getElementById('scanTitle').textContent = title;
+  document.getElementById('scanHint').textContent = hint;
+  const inp = document.getElementById('scanInput');
+  inp.value = '';
+  inp.placeholder = mode === 'issue' ? '000000' : 'box000000000';
+  inp.className = 'input' + (mode === 'issue' ? ' code-input' : '');
+  inp.setAttribute('maxlength', mode === 'issue' ? '6' : '12');
+  inp.oninput = (e) => {
+    if (mode === 'issue'){
+      e.target.value = digits(e.target.value);
+    } else {
+      let v = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (!v.startsWith('box') && v.length > 0) v = 'box' + v.replace(/\D/g, '');
+      e.target.value = v.slice(0, 12);
+    }
+  };
+  openModal('scanModal');
+  if (!scanner){
+    try { scanner = new Html5Qrcode('qrReader'); }
+    catch(e){ console.warn('init', e); return; }
   }
-  issueScanBusy = false;
+  scanBusy = false;
   try {
-    await issueScanner.start(
+    await scanner.start(
       { facingMode: 'environment' },
       { fps: 10, qrbox: { width: 240, height: 240 } },
-      (text) => onIssueScan(text),
+      (text) => onScan(text),
       () => {}
     );
   } catch(err){
@@ -539,98 +677,200 @@ async function openIssueScanner(){
     toast('Камера недоступна — введите код вручную', 'err');
   }
 }
-async function stopIssueScanner(){
-  if (issueScanner){ try { await issueScanner.stop(); } catch(e){} }
+async function stopScanner(){
+  if (scanner){ try { await scanner.stop(); } catch(e){} }
 }
-async function onIssueScan(text){
-  if (issueScanBusy) return;
-  issueScanBusy = true;
-  await stopIssueScanner();
-  closeModal('issueScanModal');
-  try { await processIssueLookup({ qr: text }); }
-  catch(err){ toast(err.message,'err'); }
-  issueScanBusy = false;
-}
-
-/* ================= СКАНЕР ПРИЁМКИ ================= */
-let intakeScanner = null, intakeScanBusy = false;
-async function openIntakeScanner(){
-  document.getElementById('intakeCodeInput').value = '';
-  openModal('intakeScanModal');
-  if (issueScanner){ try { await issueScanner.stop(); } catch(e){} }
-  if (!intakeScanner){
-    try { intakeScanner = new Html5Qrcode('qrReaderIntake'); }
-    catch(e){ console.warn('init intake', e); return; }
-  }
-  intakeScanBusy = false;
+async function onScan(text){
+  if (scanBusy) return;
+  scanBusy = true;
+  await stopScanner();
+  closeModal('scanModal');
+  const mode = state.scanMode;
   try {
-    await intakeScanner.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 240, height: 240 } },
-      (text) => onIntakeScan(text),
-      () => {}
-    );
-  } catch(err){
-    console.warn('camera err intake', err);
-    toast('Камера недоступна — введите код вручную', 'err');
+    if (mode === 'issue') await handleIssueLookup({ qr: text });
+    else await handleIntakeLookup(text);
+  } catch(err){ toast(err.message, 'err'); }
+  scanBusy = false;
+}
+document.getElementById('btnScanClose').onclick = async () => {
+  closeModal('scanModal');
+  await stopScanner();
+};
+document.getElementById('btnScanManualGo').onclick = async () => {
+  const v = document.getElementById('scanInput').value;
+  const mode = state.scanMode;
+  closeModal('scanModal');
+  await stopScanner();
+  try {
+    if (mode === 'issue') await handleIssueLookup({ code: v });
+    else await handleIntakeLookup(v);
+  } catch(err){ toast(err.message, 'err'); }
+};
+
+/* ================= РЕНДЕР ================= */
+function render(){
+  if (!state.pvzId || !state.pvz){ renderLogin(); return; }
+  const pvz = state.pvz;
+  const tab = state.tab;
+
+  document.getElementById('root').innerHTML = `
+    <div class="header">
+      <div class="logo-sm">Курсив <span>ПВЗ</span></div>
+      <button class="btn ghost small" id="btnLogout">Выйти</button>
+    </div>
+    <div class="tabs">
+      <button class="tab ${tab==='issue'?'active':''}" data-tab="issue">📤 Выдача${queueCount()?` · ${queueCount()}`:''}</button>
+      <button class="tab ${tab==='intake'?'active':''}" data-tab="intake">📦 Приёмка</button>
+    </div>
+    <div class="content">
+      <h2>${esc(pvz.name)}</h2>
+      <div class="card">
+        <div class="info-row"><span>Город</span><b>${esc(getPvzCity(pvz)||'—')}</b></div>
+        <div class="info-row"><span>Адрес</span><b style="text-align:right;max-width:60%">${esc(pvz.address)}</b></div>
+        <div class="info-row"><span>График</span><b>${esc(pvz.schedule||'—')}</b></div>
+      </div>
+      ${tab === 'issue' ? renderIssueTab() : renderIntakeTab()}
+    </div>
+  `;
+  document.getElementById('btnLogout').onclick = logout;
+  document.querySelectorAll('[data-tab]').forEach(el => {
+    el.onclick = () => { state.tab = el.dataset.tab; render(); };
+  });
+  if (tab === 'issue'){
+    document.getElementById('btnIssueScan').onclick = () => openScanner('issue');
+    const inp = document.getElementById('inlineIssueCode');
+    inp.addEventListener('input', e => { e.target.value = digits(e.target.value); });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btnInlineIssueGo').click();
+    });
+    document.getElementById('btnInlineIssueGo').onclick = async () => {
+      try { await handleIssueLookup({ code: inp.value }); }
+      catch(err){ toast(err.message, 'err'); }
+    };
+  } else {
+    document.getElementById('btnIntakeScan').onclick = () => openScanner('intake');
+    const inp = document.getElementById('inlineIntakeCode');
+    inp.addEventListener('input', e => {
+      let v = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (!v.startsWith('box') && v.length > 0) v = 'box' + v.replace(/\D/g, '');
+      e.target.value = v.slice(0, 12);
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('btnInlineIntakeGo').click();
+    });
+    document.getElementById('btnInlineIntakeGo').onclick = async () => {
+      try { await handleIntakeLookup(inp.value); }
+      catch(err){ toast(err.message, 'err'); }
+    };
   }
 }
-async function stopIntakeScanner(){
-  if (intakeScanner){ try { await intakeScanner.stop(); } catch(e){} }
+
+function renderIssueTab(){
+  const queueIds = Object.keys(state.activeOrders);
+  const issuedList = Object.values(state.recentIssued).sort((a,b)=>b.issuedAt-a.issuedAt).slice(0, 5);
+  const returnsList = Object.values(state.recentReturns).sort((a,b)=>b.returnedAt-a.returnedAt).slice(0, 5);
+
+  return `
+    <div class="card">
+      <h3>Сканировать заказ клиента</h3>
+      <button class="btn" id="btnIssueScan">📷 Сканировать QR</button>
+      <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите 6-значный код</div>
+      <input id="inlineIssueCode" class="input code-input" inputmode="numeric" maxlength="6" placeholder="000000"/>
+      <button class="btn ghost" id="btnInlineIssueGo">Найти заказ</button>
+      <div class="hint-box">
+        💡 Можно сканировать несколько заказов подряд — они соберутся в списке «В работе». Выдавайте, когда клиент готов.
+        Если сканируете <b>уже выданный</b> заказ — сразу откроется форма возврата.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>В работе (${queueIds.length})</h3>
+      ${queueIds.length ? queueIds.map(id => {
+        const it = state.activeOrders[id];
+        return `<div class="queue-item" data-queueopen="${id}">
+          <div class="queue-cell">
+            <div class="queue-cell-num">${it.cell||'—'}</div>
+            <div class="queue-cell-lbl">ЯЧЕЙКА</div>
+          </div>
+          <div class="queue-body">
+            <div class="queue-client">${esc(it.phone)}</div>
+            <div class="queue-meta">Код: ${it.code6} · ${(it.items||[]).reduce((s,i)=>s+(i.qty||1),0)} поз. · ${fmt(it.total)}</div>
+          </div>
+          <div class="queue-actions">
+            <button class="btn small" data-queueopen="${id}">Открыть</button>
+          </div>
+        </div>`;
+      }).join('') : '<div class="muted small">Список пуст. Отсканируйте заказ клиента.</div>'}
+    </div>
+
+    ${issuedList.length ? `<div class="card">
+      <h3>Недавно выдано</h3>
+      ${issuedList.map(r=>`
+        <div class="hist">
+          <div class="hist-icon green">✓</div>
+          <div style="flex:1">
+            <div><b>Ячейка ${r.cell}</b> · код ${r.code6}</div>
+            <div class="muted small">${esc(r.phone)} · ${new Date(r.issuedAt).toLocaleString('ru-RU')}</div>
+          </div>
+        </div>`).join('')}
+    </div>` : ''}
+
+    ${returnsList.length ? `<div class="card">
+      <h3>Недавно возвращено</h3>
+      ${returnsList.map(r=>`
+        <div class="hist">
+          <div class="hist-icon orange">↩</div>
+          <div style="flex:1">
+            <div><b>Ячейка ${r.cell}</b> · код ${r.code6}</div>
+            <div class="muted small">${esc(r.phone)} · ${esc(r.reason||'')}</div>
+            <div class="muted small">${new Date(r.returnedAt).toLocaleString('ru-RU')}</div>
+          </div>
+        </div>`).join('')}
+    </div>` : ''}
+  `;
 }
-async function onIntakeScan(text){
-  if (intakeScanBusy) return;
-  intakeScanBusy = true;
-  await stopIntakeScanner();
-  closeModal('intakeScanModal');
-  try { await processIntakeLookup(text); }
-  catch(err){ toast(err.message,'err'); }
-  intakeScanBusy = false;
+
+function renderIntakeTab(){
+  const intakeList = Object.values(state.recentIntake).sort((a,b)=>b.receivedAt-a.receivedAt).slice(0, 10);
+  return `
+    <div class="card">
+      <h3>Приёмка коробок</h3>
+      <p class="muted small" style="margin:0 0 12px">Отсканируйте QR коробки (<b>box + 9 цифр</b>) или введите код</p>
+      <button class="btn blue" id="btnIntakeScan">📦 Сканировать QR коробки</button>
+      <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите код коробки</div>
+      <input id="inlineIntakeCode" class="input" placeholder="box000000000" autocomplete="off"/>
+      <button class="btn ghost" id="btnInlineIntakeGo">Принять коробку</button>
+    </div>
+
+    ${intakeList.length ? `<div class="card">
+      <h3>Недавно принято</h3>
+      ${intakeList.map(r=>`
+        <div class="hist">
+          <div class="hist-icon blue">📦</div>
+          <div style="flex:1">
+            <div><b>Ячейка ${r.cell}</b> · ${esc(r.boxCode)}</div>
+            <div class="muted small">${esc(r.phone)} · ${new Date(r.receivedAt).toLocaleString('ru-RU')}</div>
+          </div>
+        </div>`).join('')}
+    </div>` : ''}
+  `;
 }
 
-/* ================= ОБРАБОТЧИКИ МОДАЛОК ================= */
-document.getElementById('btnIssueScanClose').onclick = async () => {
-  closeModal('issueScanModal');
-  await stopIssueScanner();
-};
-document.getElementById('btnIssueCodeGo').onclick = async () => {
-  const v = document.getElementById('issueCodeInput').value;
-  closeModal('issueScanModal');
-  await stopIssueScanner();
-  try { await processIssueLookup({ code: v }); }
-  catch(err){ toast(err.message,'err'); }
-};
-document.getElementById('issueCodeInput').addEventListener('input', e => { e.target.value = digits(e.target.value); });
-document.getElementById('issueCodeInput').addEventListener('keydown', e => {
-  if (e.key==='Enter') document.getElementById('btnIssueCodeGo').click();
-});
-
-document.getElementById('btnIntakeScanClose').onclick = async () => {
-  closeModal('intakeScanModal');
-  await stopIntakeScanner();
-};
-document.getElementById('btnIntakeCodeGo').onclick = async () => {
-  const v = document.getElementById('intakeCodeInput').value;
-  closeModal('intakeScanModal');
-  await stopIntakeScanner();
-  try { await processIntakeLookup(v); }
-  catch(err){ toast(err.message,'err'); }
-};
-document.getElementById('intakeCodeInput').addEventListener('input', e => {
-  let v = e.target.value.toLowerCase().replace(/[^a-z0-9]/g,'');
-  if (!v.startsWith('box') && v.length > 0){
-    v = 'box' + v.replace(/\D/g,'');
-  }
-  e.target.value = v.slice(0, 12);
-});
-document.getElementById('intakeCodeInput').addEventListener('keydown', e => {
-  if (e.key==='Enter') document.getElementById('btnIntakeCodeGo').click();
-});
-
+/* ================= ОБРАБОТЧИК КЛИКОВ ================= */
 document.addEventListener('click', (e) => {
-  if (e.target.closest('[data-close]')) closeModal(e.target.closest('[data-close]').dataset.close);
+  const closeBtn = e.target.closest('[data-close]');
+  if (closeBtn){ closeModal(closeBtn.dataset.close); return; }
+
+  const queueOpen = e.target.closest('[data-queueopen]');
+  if (queueOpen){
+    e.preventDefault();
+    e.stopPropagation();
+    openConfirm('queue', { orderId: queueOpen.dataset.queueopen });
+    return;
+  }
 });
 
+/* ================= СТАРТ ================= */
 (function boot(){
   const saved = localStorage.getItem('pvz_session');
   if (saved) subscribe(saved);
