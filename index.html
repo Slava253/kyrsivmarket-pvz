@@ -3,97 +3,92 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Курсив банк — Терминал</title>
+<title>Курсив Маркет — ПВЗ</title>
 <style>
-:root{--bg:#070b16;--card:#111830;--text:#e8ecff;--muted:#8b95c2;--accent:#5b7cff;--accent2:#7c5bff;--ok:#25d18a;--err:#ff5b6e;--border:#26305a}
+:root{--bg:#0b1020;--card:#141b33;--card2:#1b2444;--text:#e8ecff;--muted:#8b95c2;
+  --accent:#5b7cff;--accent2:#7c5bff;--ok:#25d18a;--err:#ff5b6e;--border:#26305a}
 *{box-sizing:border-box}
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  background:radial-gradient(1000px 700px at 50% -10%,#1a2350,#070b16 70%);color:var(--text);
-  min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:20px}
-.term{width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);
-  border-radius:24px;padding:26px;box-shadow:0 20px 60px rgba(0,0,0,.5);margin-top:30px}
+  background:radial-gradient(1200px 800px at 20% -10%, #1a2350, #0b1020 60%);
+  color:var(--text);min-height:100vh}
+.wrap{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column}
+.header{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
+.logo-sm{font-weight:700}
+.logo-sm span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.content{padding:16px;flex:1;padding-bottom:40px}
+h2{font-size:20px;margin:0 0 12px}
+h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
+.muted{color:var(--muted)} .small{font-size:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:14px}
+.input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);
+  background:#0f1530;color:var(--text);font-size:15px;margin-bottom:10px;font-family:inherit;outline:none}
+.input:focus{border-color:var(--accent)}
+.code-input{letter-spacing:8px;text-align:center;font-size:22px;font-family:monospace}
+.btn{width:100%;padding:13px;border-radius:12px;border:none;cursor:pointer;font-size:15px;font-weight:600;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:inherit;transition:transform .1s}
+.btn:active{transform:scale(.98)}
+.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn.small{width:auto;padding:8px 14px;font-size:13px;border-radius:10px}
+.btn.ok{background:var(--ok)}
+.btn:disabled{opacity:.5;cursor:wait}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+.panel{width:100%;max-width:400px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:26px}
 .brand{text-align:center;margin-bottom:20px}
 .logo{width:56px;height:56px;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;
   font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--accent),var(--accent2));margin-bottom:10px}
-h1{font-size:20px;margin:0 0 4px}
-.muted{color:var(--muted);font-size:13px}
-.paytabs{display:flex;gap:6px;margin-bottom:16px;background:#0a1024;padding:6px;border-radius:14px;border:1px solid var(--border)}
-.paytab{flex:1;padding:10px;border-radius:10px;border:none;background:transparent;color:var(--muted);
-  font-size:14px;font-family:inherit;cursor:pointer;transition:.15s}
-.paytab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
-.input{width:100%;padding:14px;border-radius:12px;border:1px solid var(--border);background:#0f1530;
-  color:var(--text);font-size:16px;margin-bottom:12px;font-family:inherit;outline:none}
-.input:focus{border-color:var(--accent)}
-.btn{width:100%;padding:15px;border-radius:12px;border:none;cursor:pointer;font-size:16px;font-weight:700;
-  background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:inherit;
-  transition:transform .1s;margin-bottom:8px}
-.btn:active{transform:scale(.98)}
-.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
-.btn:disabled{opacity:.5;cursor:wait}
-.result{margin-top:16px;padding:16px;border-radius:14px;text-align:center;font-size:15px;display:none;
-  animation:resultIn .35s ease}
-.result.show{display:block}
-.result.ok{background:rgba(37,209,138,.12);border:1px solid var(--ok);color:var(--ok)}
-.result.err{background:rgba(255,91,110,.12);border:1px solid var(--err);color:var(--err)}
-.result .big{font-size:22px;font-weight:700;margin-top:6px}
-@keyframes resultIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-#qrDisplay{text-align:center;padding:16px;background:#0a1024;border-radius:16px;margin-bottom:12px}
-#qrDisplay canvas{border-radius:12px;background:#fff;max-width:100%;height:auto;display:block;margin:0 auto}
-#qrIdShow{font-family:monospace;font-size:11px;word-break:break-all;color:var(--muted);margin:8px 0}
-/* ===== АНИМАЦИЯ ===== */
-.anim-overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  pointer-events:none;z-index:9999;animation:animFade 1.5s ease forwards}
-.anim-icon{width:96px;height:96px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-  font-size:48px;font-weight:800;color:#fff;margin-bottom:14px;
-  animation:animPop .55s cubic-bezier(.2,.9,.3,1.4)}
-.anim-icon.ok{background:linear-gradient(135deg,#25d18a,#1fa870);box-shadow:0 12px 48px rgba(37,209,138,.55)}
-.anim-icon.out{background:linear-gradient(135deg,#5b7cff,#7c5bff);box-shadow:0 12px 48px rgba(91,124,255,.55)}
-.anim-amt{font-size:26px;font-weight:800;animation:animSlide .5s ease .1s both;text-shadow:0 2px 12px rgba(0,0,0,.6)}
-.anim-amt.pos{color:#5feeb4} .anim-amt.neg{color:#fff}
-.anim-label{color:var(--muted);font-size:13px;margin-top:6px;animation:animSlide .5s ease .2s both}
-@keyframes animFade{0%{opacity:0}15%{opacity:1}80%{opacity:1}100%{opacity:0}}
-@keyframes animPop{0%{transform:scale(0)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
-@keyframes animSlide{0%{transform:translateY(16px);opacity:0}100%{transform:translateY(0);opacity:1}}
+.err{color:var(--err);font-size:13px;min-height:18px;margin-bottom:8px}
+.empty{padding:30px;text-align:center;color:var(--muted)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);z-index:1000;
+  display:none;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal-body{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;
+  width:100%;max-width:440px;max-height:92vh;overflow-y:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.modal-head b{font-size:17px}
+.close-btn{background:transparent;border:1px solid var(--border);color:var(--muted);width:32px;height:32px;
+  border-radius:10px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+#qrReader{width:100%;min-height:220px;border-radius:14px;overflow:hidden;background:#0a1024;border:1px solid var(--border)}
+#qrReader video{border-radius:14px}
+.cell-display{text-align:center;padding:24px;background:linear-gradient(135deg,#243066,#3a2a6e);
+  border-radius:20px;margin-bottom:16px}
+.cell-num{font-size:56px;font-weight:800;color:#fff;line-height:1}
+.cell-label{color:rgba(255,255,255,.7);font-size:13px;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px}
+.info-row{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
+.info-row span:first-child{color:var(--muted)}
+.hist{display:flex;align-items:center;gap:10px;padding:10px;background:var(--card2);border-radius:10px;margin-bottom:6px;font-size:13px}
+.hist-icon{width:32px;height:32px;border-radius:8px;background:rgba(37,209,138,.15);color:var(--ok);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:12px;
+  background:var(--card2);border:1px solid var(--border);font-size:14px;z-index:9999;animation:up .2s;max-width:90vw}
+.toast.ok{border-color:var(--ok)} .toast.err{border-color:var(--err)}
+@keyframes up{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 </style>
 </head>
 <body>
-<div class="term">
-  <div class="brand">
-    <div class="logo">К</div>
-    <h1>Курсив банк</h1>
-    <div class="muted">Платёжный терминал</div>
-  </div>
+<div class="wrap" id="root"></div>
 
-  <div class="paytabs">
-    <button class="paytab active" data-mode="card">Оплата картой</button>
-    <button class="paytab" data-mode="qr">QR-код</button>
+<!-- Сканер QR -->
+<div id="scanModal" class="modal">
+  <div class="modal-body">
+    <div class="modal-head"><b>Сканировать заказ</b>
+      <button class="close-btn" id="btnScanClose">✕</button></div>
+    <div id="qrReader"></div>
+    <p class="muted small" style="text-align:center;margin:14px 0 8px">или введите 6-значный код</p>
+    <input id="codeInput" class="input code-input" inputmode="numeric" maxlength="6" placeholder="000000"/>
+    <button class="btn" id="btnCodeGo">Найти заказ</button>
   </div>
+</div>
 
-  <div id="modeCard">
-    <input id="cardNumber" class="input" inputmode="numeric" placeholder="Номер карты"/>
-    <input id="amount" class="input" inputmode="decimal" placeholder="Сумма к оплате"/>
-    <button class="btn" id="btnPay">Оплатить</button>
-  </div>
-
-  <div id="modeQr" style="display:none">
-    <input id="qrAmount" class="input" inputmode="decimal" placeholder="Сумма"/>
-    <button class="btn" id="btnGenQr">Создать QR</button>
-    <div id="qrDisplay" style="display:none">
-      <canvas id="qrCanvas"></canvas>
-      <div class="muted small" style="margin-top:8px">Код</div>
-      <div id="qrIdShow"></div>
-      <div class="muted small" id="qrStatusText">Ожидание оплаты…</div>
-      <button class="btn ghost" id="btnCancelQr" style="margin-top:12px">Отменить</button>
-    </div>
-  </div>
-
-  <div class="result" id="result"></div>
+<!-- Результат -->
+<div id="resultModal" class="modal">
+  <div class="modal-body" id="resultBody"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
+/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyBlZ5ZtyTXgtXxSJAx1jOxwhTrzlHRJmo",
   authDomain: "bk-cashier.firebaseapp.com",
@@ -107,154 +102,290 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 db.goOnline();
 
-const $ = id => document.getElementById(id);
-const fmt = n => new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(Number(n)||0) + ' ₽';
-const QR_TTL = 5 * 60 * 1000;
+/* ================= УТИЛИТЫ ================= */
+const fmt = n => new Intl.NumberFormat('ru-RU').format(Number(n)||0) + ' ₽';
+const digits = v => String(v||'').replace(/\D/g,'');
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-function showResult(ok, msg, extra){
-  const r = $('result');
-  r.className = 'result show ' + (ok ? 'ok' : 'err');
-  r.innerHTML = `<div>${msg}</div>${extra ? `<div class="big">${extra}</div>` : ''}`;
+function toast(msg, type){
+  const t = document.createElement('div');
+  t.className = 'toast ' + (type||'');
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2800);
 }
-function hideResult(){ $('result').className = 'result'; $('result').innerHTML = ''; }
-function toast(msg){ showResult(false, msg); }
+function openModal(id){ document.getElementById(id).classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 
-function celebrate(positive, amount, label){
-  const el = document.createElement('div');
-  el.className = 'anim-overlay';
-  el.innerHTML = `
-    <div class="anim-icon ${positive?'ok':'out'}">${positive?'✓':'↑'}</div>
-    <div class="anim-amt ${positive?'pos':'neg'}">${positive?'+':'−'}${fmt(amount)}</div>
-    <div class="anim-label">${label||''}</div>
+/* ================= СОСТОЯНИЕ ================= */
+const state = { pvzId: null, pvz: null, recent: {}, scanResult: null };
+let unsubPvz = null, unsubRecent = null;
+let renderPending = false;
+function renderSoon(){
+  if (renderPending) return;
+  renderPending = true;
+  requestAnimationFrame(()=>{ renderPending = false; render(); });
+}
+
+/* ================= АВТОРИЗАЦИЯ ================= */
+function renderLogin(){
+  const root = document.getElementById('root');
+  root.innerHTML = `
+    <div class="login-wrap"><div class="panel">
+      <div class="brand"><div class="logo">К</div><h1>Курсив ПВЗ</h1></div>
+      <h2>Вход для ПВЗ</h2>
+      <p class="muted small">Введите логин и пароль, выданные после одобрения заявки</p>
+      <input id="loginInput" class="input" placeholder="Логин (pvz...)" autocomplete="username"/>
+      <input id="passInput" class="input" type="password" placeholder="Пароль" autocomplete="current-password"/>
+      <div class="err" id="err"></div>
+      <button class="btn" id="btnLogin">Войти</button>
+    </div></div>
   `;
-  document.body.appendChild(el);
-  setTimeout(()=>el.remove(), 1600);
-}
-
-/* ===== Переключение режимов ===== */
-document.querySelectorAll('.paytab').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('.paytab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const m = btn.dataset.mode;
-    $('modeCard').style.display = m==='card' ? 'block' : 'none';
-    $('modeQr').style.display = m==='qr' ? 'block' : 'none';
-    hideResult();
-    if (m !== 'qr') cancelQr();
+  const go = async () => {
+    const login = document.getElementById('loginInput').value.trim().toLowerCase();
+    const pass = document.getElementById('passInput').value;
+    const err = document.getElementById('err');
+    err.textContent = '';
+    if (!login || !pass){ err.textContent = 'Заполните оба поля'; return; }
+    document.getElementById('btnLogin').textContent = 'Проверяем…';
+    try {
+      const snap = await db.ref('pvzLogins/'+login).once('value');
+      if (!snap.exists()) throw new Error('Неверный логин или пароль');
+      const data = snap.val();
+      if (data.password !== pass) throw new Error('Неверный логин или пароль');
+      localStorage.setItem('pvz_session', data.pvzId);
+      subscribe(data.pvzId);
+    } catch(e){
+      err.textContent = e.message;
+      document.getElementById('btnLogin').textContent = 'Войти';
+    }
   };
-});
-
-/* ===== Оплата картой ===== */
-async function terminalPay(cardNumber, amountRaw){
-  const amount = Math.round((parseFloat(String(amountRaw).replace(',','.'))||0)*100)/100;
-  if (!cardNumber) return { ok:false, msg:'Введите номер карты' };
-  if (!(amount > 0)) return { ok:false, msg:'Неверная сумма' };
-  const idx = await db.ref('cards/'+cardNumber).once('value');
-  if (!idx.exists()) return { ok:false, msg:'Карта не найдена' };
-  const phone = idx.val().phone;
-  const userSnap = await db.ref('users/'+phone).once('value');
-  const user = userSnap.val();
-  if (!user) return { ok:false, msg:'Клиент не найден' };
-  if (user.frozen) return { ok:false, msg:'Аккаунт клиента заморожен' };
-  if (!user.cards || !user.cards[cardNumber]) return { ok:false, msg:'Карта неактивна' };
-  const res = await db.ref('users/'+phone+'/balance').transaction(b => {
-    const bal = b || 0;
-    if (bal < amount) return;
-    return bal - amount;
-  });
-  if (!res.committed) return { ok:false, msg:'Недостаточно средств' };
-  await db.ref('users/'+phone+'/history').push({
-    type:'terminal', amount, card: cardNumber, note:'Оплата в терминале', ts: Date.now()
-  });
-  return { ok:true, msg:'Оплата прошла успешно', amount };
+  document.getElementById('btnLogin').onclick = go;
+  document.getElementById('passInput').addEventListener('keydown', e => { if (e.key==='Enter') go(); });
+  document.getElementById('loginInput').addEventListener('keydown', e => { if (e.key==='Enter') go(); });
 }
 
-$('btnPay').onclick = async () => {
-  const card = $('cardNumber').value.replace(/\D/g,'');
-  const amount = $('amount').value;
-  $('btnPay').disabled = true;
-  $('btnPay').textContent = 'Обработка…';
+function subscribe(pvzId){
+  state.pvzId = pvzId;
+  if (unsubPvz) unsubPvz();
+  unsubPvz = db.ref('pvz/'+pvzId).on('value', snap => {
+    if (!snap.exists()){ logout(); return; }
+    state.pvz = snap.val();
+    renderSoon();
+  });
+  if (unsubRecent) unsubRecent();
+  unsubRecent = db.ref('pvzIssued/'+pvzId).on('value', snap => {
+    state.recent = snap.val() || {};
+    renderSoon();
+  });
+}
+function logout(){
+  if (unsubPvz){ unsubPvz(); unsubPvz = null; }
+  if (unsubRecent){ unsubRecent(); unsubRecent = null; }
+  localStorage.removeItem('pvz_session');
+  state.pvzId = null; state.pvz = null; state.recent = {};
+  render();
+}
+
+/* ================= ВЫДАЧА ================= */
+async function findOrderByQr(qrText){
+  const orderId = String(qrText||'').trim().replace(/^mkt:/i, '').replace(/%3A/gi, ':').trim();
+  if (!orderId) throw new Error('Пустой QR-код');
+  const idx = await db.ref('orderIndex/'+orderId).once('value');
+  if (!idx.exists()) throw new Error('Заказ не найден');
+  const { phone } = idx.val();
+  const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
+  if (!oSnap.exists()) throw new Error('Заказ не найден');
+  return { orderId, phone, order: oSnap.val() };
+}
+async function findOrderByCode(code6){
+  code6 = digits(code6);
+  if (code6.length !== 6) throw new Error('Код должен быть из 6 цифр');
+  const idx = await db.ref('codeIndex/'+code6).once('value');
+  if (!idx.exists()) throw new Error('Код не найден или уже использован');
+  const { orderId, phone } = idx.val();
+  const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
+  if (!oSnap.exists()) throw new Error('Заказ не найден');
+  return { orderId, phone, order: oSnap.val() };
+}
+async function issueOrder(orderId, phone, code6){
+  const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
+  if (!oSnap.exists()) throw new Error('Заказ не найден');
+  const o = oSnap.val();
+  if (o.status === 'issued') throw new Error('Заказ уже выдан');
+  if (o.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
+  const updates = {};
+  updates['users/'+phone+'/orders/'+orderId+'/status'] = 'issued';
+  updates['users/'+phone+'/orders/'+orderId+'/issuedAt'] = Date.now();
+  updates['users/'+phone+'/orders/'+orderId+'/issuedBy'] = state.pvzId;
+  updates['orderIndex/'+orderId+'/status'] = 'issued';
+  updates['codeIndex/'+code6] = null;
+  updates['pvzIssued/'+state.pvzId+'/'+orderId] = {
+    phone, code6, cell: o.cell, issuedAt: Date.now()
+  };
+  await db.ref().update(updates);
+}
+async function processLookup(input){
+  let result;
+  if (input.qr) result = await findOrderByQr(input.qr);
+  else if (input.code) result = await findOrderByCode(input.code);
+  else throw new Error('Нет данных');
+  if (result.order.status === 'issued') throw new Error('Заказ уже выдан');
+  if (result.order.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
+  state.scanResult = result;
+  renderResult(result);
+  openModal('resultModal');
+}
+function renderResult({ orderId, phone, order }){
+  document.getElementById('resultBody').innerHTML = `
+    <div class="modal-head"><b>Заказ найден</b>
+      <button class="close-btn" id="btnResClose">✕</button></div>
+    <div class="cell-display">
+      <div class="cell-label">Ячейка</div>
+      <div class="cell-num">${order.cell}</div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="muted small" style="margin-bottom:6px">Состав заказа</div>
+      ${order.items.map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji} ${esc(i.name)} ×${i.qty}</div>`).join('')}
+      <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+        <span class="muted">Итого</span><b>${fmt(order.total)}</b>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="info-row"><span>Клиент</span><b>${esc(phone)}</b></div>
+      <div class="info-row"><span>Код</span><b>${order.code6}</b></div>
+    </div>
+    <button class="btn ok" id="btnIssue">Выдать заказ</button>
+  `;
+  document.getElementById('btnResClose').onclick = () => {
+    state.scanResult = null; closeModal('resultModal');
+  };
+  document.getElementById('btnIssue').onclick = async () => {
+    if (!state.scanResult) return;
+    const btn = document.getElementById('btnIssue');
+    btn.disabled = true; btn.textContent = 'Выдаём…';
+    try {
+      await issueOrder(state.scanResult.orderId, state.scanResult.phone, state.scanResult.order.code6);
+      toast('Заказ выдан', 'ok');
+      state.scanResult = null;
+      closeModal('resultModal');
+    } catch(err){ toast(err.message,'err'); }
+    btn.disabled = false; btn.textContent = 'Выдать заказ';
+  };
+}
+
+/* ================= РЕНДЕР ================= */
+function render(){
+  if (!state.pvzId || !state.pvz){ renderLogin(); return; }
+  const pvz = state.pvz;
+  const recentList = Object.values(state.recent).sort((a,b)=>b.issuedAt-a.issuedAt).slice(0, 10);
+
+  document.getElementById('root').innerHTML = `
+    <div class="header">
+      <div class="logo-sm">Курсив <span>ПВЗ</span></div>
+      <button class="btn ghost small" id="btnLogout">Выйти</button>
+    </div>
+    <div class="content">
+      <h2>${esc(pvz.name)}</h2>
+      <div class="card">
+        <div class="info-row"><span>Адрес</span><b style="text-align:right;max-width:60%">${esc(pvz.address)}</b></div>
+        <div class="info-row"><span>График</span><b>${esc(pvz.schedule||'—')}</b></div>
+        <div class="info-row"><span>Логин</span><b>${esc(pvz.login||'—')}</b></div>
+      </div>
+
+      <div class="card">
+        <h3>Выдать заказ</h3>
+        <p class="muted small" style="margin:0 0 12px">Отсканируйте QR клиента или введите 6-значный код</p>
+        <button class="btn" id="btnScan">📷 Сканировать QR</button>
+        <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите код вручную</div>
+        <input id="inlineCode" class="input code-input" inputmode="numeric" maxlength="6" placeholder="000000"/>
+        <button class="btn ghost" id="btnInlineGo">Найти заказ</button>
+      </div>
+
+      ${recentList.length ? `<div class="card">
+        <h3>Недавно выдано</h3>
+        ${recentList.map(r=>`
+          <div class="hist">
+            <div class="hist-icon">✓</div>
+            <div style="flex:1">
+              <div><b>Ячейка ${r.cell}</b> · код ${r.code6}</div>
+              <div class="muted small">${esc(r.phone)} · ${new Date(r.issuedAt).toLocaleString('ru-RU')}</div>
+            </div>
+          </div>`).join('')}
+      </div>` : ''}
+    </div>
+  `;
+  document.getElementById('btnLogout').onclick = logout;
+  document.getElementById('btnScan').onclick = openScanner;
+  document.getElementById('inlineCode').addEventListener('input', e => { e.target.value = digits(e.target.value); });
+  document.getElementById('inlineCode').addEventListener('keydown', e => {
+    if (e.key==='Enter') document.getElementById('btnInlineGo').click();
+  });
+  document.getElementById('btnInlineGo').onclick = async () => {
+    try { await processLookup({ code: document.getElementById('inlineCode').value }); }
+    catch(err){ toast(err.message,'err'); }
+  };
+}
+
+/* ================= СКАНЕР ================= */
+let scanner = null, scanBusy = false;
+async function openScanner(){
+  document.getElementById('codeInput').value = '';
+  openModal('scanModal');
+  if (!scanner){
+    try { scanner = new Html5Qrcode('qrReader'); }
+    catch(e){ console.warn('init', e); return; }
+  }
+  scanBusy = false;
   try {
-    const r = await terminalPay(card, amount);
-    showResult(r.ok, r.msg, r.ok ? 'Списано ' + fmt(r.amount) : '');
-    if (r.ok){
-      celebrate(false, r.amount, 'Оплата в терминале');
-      $('amount').value = '';
-    }
+    await scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 240, height: 240 } },
+      (text) => onScan(text),
+      () => {}
+    );
   } catch(err){
-    showResult(false, 'Ошибка: ' + err.message);
+    console.warn('camera err', err);
+    toast('Камера недоступна — введите код вручную', 'err');
   }
-  $('btnPay').disabled = false;
-  $('btnPay').textContent = 'Оплатить';
+}
+async function stopScanner(){
+  if (scanner){ try { await scanner.stop(); } catch(e){} }
+}
+async function onScan(text){
+  if (scanBusy) return;
+  scanBusy = true;
+  await stopScanner();
+  closeModal('scanModal');
+  try { await processLookup({ qr: text }); }
+  catch(err){ toast(err.message,'err'); }
+  scanBusy = false;
+}
+document.getElementById('btnScanClose').onclick = async () => {
+  closeModal('scanModal');
+  await stopScanner();
 };
-
-$('cardNumber').addEventListener('input', e => {
-  e.target.value = e.target.value.replace(/\D/g,'');
+document.getElementById('btnCodeGo').onclick = async () => {
+  const v = document.getElementById('codeInput').value;
+  closeModal('scanModal');
+  await stopScanner();
+  try { await processLookup({ code: v }); }
+  catch(err){ toast(err.message,'err'); }
+};
+document.getElementById('codeInput').addEventListener('input', e => { e.target.value = digits(e.target.value); });
+document.getElementById('codeInput').addEventListener('keydown', e => {
+  if (e.key==='Enter') document.getElementById('btnCodeGo').click();
+});
+document.addEventListener('click', (e) => {
+  if (e.target.closest('[data-close]')) closeModal(e.target.dataset.close);
 });
 
-/* ===== QR-оплата ===== */
-let currentQrId = null;
-let qrListener = null;
-let qrExpireTimer = null;
-
-function cancelQr(){
-  if (qrListener && currentQrId){
-    db.ref('qr_payments/'+currentQrId).off('value', qrListener);
-    qrListener = null;
-  }
-  if (qrExpireTimer){ clearTimeout(qrExpireTimer); qrExpireTimer = null; }
-  currentQrId = null;
-  $('qrDisplay').style.display = 'none';
-  $('btnGenQr').style.display = 'block';
-  $('qrAmount').disabled = false;
-}
-
-$('btnCancelQr').onclick = () => { cancelQr(); hideResult(); };
-
-$('btnGenQr').onclick = async () => {
-  const amount = Math.round((parseFloat(String($('qrAmount').value).replace(',','.'))||0)*100)/100;
-  if (!(amount > 0)){ toast('Введите сумму'); return; }
-
-  const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
-  await db.ref('qr_payments/'+id).set({ amount, status:'pending', ts: Date.now() });
-
-  currentQrId = id;
-  hideResult();
-
-  new QRious({
-    element: $('qrCanvas'),
-    value: 'cursivpay:' + id,
-    size: 260, background: '#ffffff', foreground: '#0b1020', level: 'M'
-  });
-  $('qrIdShow').textContent = id;
-  $('qrStatusText').textContent = 'Ожидание оплаты…';
-  $('qrDisplay').style.display = 'block';
-  $('btnGenQr').style.display = 'none';
-  $('qrAmount').disabled = true;
-
-  qrListener = db.ref('qr_payments/'+id).on('value', snap => {
-    const p = snap.val();
-    if (p && p.status === 'paid'){
-      db.ref('qr_payments/'+id).off('value', qrListener); qrListener = null;
-      if (qrExpireTimer){ clearTimeout(qrExpireTimer); qrExpireTimer = null; }
-      celebrate(true, p.amount, 'Оплата получена');
-      showResult(true, 'Оплата получена', fmt(p.amount));
-      $('qrStatusText').textContent = '✓ Оплачено';
-      setTimeout(() => { cancelQr(); $('qrAmount').value = ''; }, 2000);
-    }
-  });
-
-  qrExpireTimer = setTimeout(async () => {
-    if (!currentQrId) return;
-    const snap = await db.ref('qr_payments/'+currentQrId).once('value');
-    const p = snap.val();
-    if (p && p.status === 'pending'){
-      await db.ref('qr_payments/'+currentQrId+'/status').set('expired');
-      $('qrStatusText').textContent = '⏱ Время истекло';
-      if (qrListener){ db.ref('qr_payments/'+currentQrId).off('value', qrListener); qrListener = null; }
-    }
-  }, QR_TTL);
-};
+/* ================= СТАРТ ================= */
+(function boot(){
+  const saved = localStorage.getItem('pvz_session');
+  if (saved) subscribe(saved);
+  else render();
+})();
 </script>
 </body>
 </html>
