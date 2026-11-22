@@ -665,17 +665,25 @@ function renderQueueConfirm(body, data){
   const item = state.activeOrders[orderId];
   if (!item){ closeConfirm(); return; }
   
+  // Раскладываем каждый товар на отдельные единицы для выдачи
+  const flatItems = [];
+  (item.items||[]).forEach(i => {
+    for (let k = 0; k < (i.qty || 1); k++) {
+      flatItems.push({ ...i, qty: 1 });
+    }
+  });
+  
   body.innerHTML = `
     <div class="modal-head"><b>Заказ в работе</b><button class="close-btn" id="btnConfirmClose">✕</button></div>
     <div class="cell-display"><div class="cell-label">Ячейка</div><div class="cell-num">${item.cell}</div></div>
     
     <div class="muted small" style="margin-bottom:8px">Отметьте товары для выдачи (снятые галочки уйдут в возврат):</div>
-    <div id="issueItemsBox" style="margin-bottom:12px">
-      ${(item.items||[]).map((i, idx) => `
+    <div id="issueItemsBox" style="margin-bottom:12px; max-height: 300px; overflow-y: auto;">
+      ${flatItems.map((i, idx) => `
         <label class="issue-item-row">
           <input type="checkbox" class="issue-chk" data-idx="${idx}" checked/>
-          <div class="issue-item-info">${i.emoji||''} ${esc(i.name||'')} ×${i.qty||1}</div>
-          <div class="issue-item-price">${fmt(i.price*(i.qty||1))}</div>
+          <div class="issue-item-info">${i.emoji||''} ${esc(i.name||'')} ×1</div>
+          <div class="issue-item-price">${fmt(i.price)}</div>
         </label>
       `).join('')}
     </div>
@@ -697,8 +705,7 @@ function renderQueueConfirm(body, data){
     let t = 0;
     body.querySelectorAll('.issue-chk').forEach((chk, idx) => {
       if (chk.checked) {
-        const i = item.items[idx];
-        t += i.price * i.qty;
+        t += flatItems[idx].price;
       }
     });
     document.getElementById('modalTotal').textContent = fmt(t);
@@ -714,8 +721,8 @@ function renderQueueConfirm(body, data){
     
     if (!selectedIdxs.length) { toast('Выберите хотя бы один товар для выдачи', 'err'); return; }
 
-    const issued = item.items.filter((_, idx) => selectedIdxs.includes(idx));
-    const returned = item.items.filter((_, idx) => !selectedIdxs.includes(idx));
+    const issued = flatItems.filter((_, idx) => selectedIdxs.includes(idx));
+    const returned = flatItems.filter((_, idx) => !selectedIdxs.includes(idx));
 
     const btn = document.getElementById('btnQueueIssue');
     btn.disabled = true; btn.textContent = 'Выдаём…';
@@ -1087,7 +1094,7 @@ function renderIntakeTab(){
   return `
     <div class="card">
       <h3>Приёмка коробок</h3>
-      <p class="muted small" style="margin:0 0 12px">Шаг 1 — отсканируйте QR коробки (box…). Шаг 2 — отсканируйте QR каждого товара (с задержкой 5 сек). Шаг 3 — подтвердите.</p>
+      <p class="muted small" style="margin:0 0 12px">Шаг 1 — отсканируйте QR коробки (box…). Шаг 2 — отсканируйте QR каждого товара. Шаг 3 — подтвердите.</p>
       <button class="btn blue" id="btnIntakeScan">📦 Сканировать коробку</button>
       <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите код коробки</div>
       <input id="inlineIntakeCode" class="input" placeholder="box000000000" autocomplete="off"/>
