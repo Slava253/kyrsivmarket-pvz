@@ -180,7 +180,7 @@ const state = {
   pvzOrders:{}, activeOrders:{},
   scanMode:'issue',
   confirmType:null, confirmData:null,
-  intakeBox: null, // { orderId, phone, order, boxCode, expected:{qr:count}, scanned:{qr:count} }
+  intakeBox: null,
 };
 let unsubPvz=null, unsubIssued=null, unsubIntake=null, unsubReturns=null, unsubOrders=null;
 let renderPending=false;
@@ -303,7 +303,6 @@ function logout(){
   render();
 }
 
-/* ================= ПОИСК ================= */
 async function findOrderByQr(qrText){
   const orderId = String(qrText||'').trim().replace(/^mkt:/i,'').trim();
   if (!orderId) throw new Error('Пустой QR-код');
@@ -336,7 +335,6 @@ async function findOrderByBox(boxCode){
   return { orderId: data.orderId, phone: data.phone, order: oSnap.val(), boxCode: code };
 }
 
-/* ================= ОПЕРАЦИИ ================= */
 async function issueOrder(orderId, phone){
   const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
   if (!oSnap.exists()) throw new Error('Заказ не найден');
@@ -387,7 +385,6 @@ async function returnOrder(orderId, phone, reason){
   removeFromQueue(orderId);
 }
 
-/* ================= ПОИСК ОПЕРАЦИЙ ================= */
 async function handleIssueLookup(input){
   let result;
   if (input.qr) result = await findOrderByQr(input.qr);
@@ -414,7 +411,6 @@ async function handleIntakeLookup(boxCode){
   if (result.order.status !== 'transit' && result.order.status !== 'pending')
     throw new Error('Заказ в недопустимом статусе');
 
-  // Инициализируем состояние сканирования товаров
   const units = Array.isArray(result.order.units) ? result.order.units : [];
   const expected = {};
   const scanned = {};
@@ -428,7 +424,6 @@ async function handleIntakeLookup(boxCode){
   openConfirm('receive', { ...result, boxCode: result.boxCode });
 }
 
-// обработка скана QR товара при приёмке
 function handleProductScan(qr){
   const ib = state.intakeBox;
   if (!ib){ toast('Сначала отсканируйте коробку','err'); return; }
@@ -453,11 +448,10 @@ function allScanned(){
   const ib = state.intakeBox;
   if (!ib) return true;
   const keys = Object.keys(ib.expected);
-  if (!keys.length) return true; // старые заказы без units
+  if (!keys.length) return true;
   return keys.every(q => ib.scanned[q] >= ib.expected[q]);
 }
 
-/* ================= 2D-СКАНЕР ================= */
 let globalScanBuffer = '';
 let globalScanLastTime = 0;
 const SCAN_TIMEOUT_MS = 120;
@@ -478,13 +472,9 @@ async function handleGlobalScan(raw){
   console.log('[2D scan]', v);
   const low = v.toLowerCase();
 
-  // Если активна приёмка — сначала пробуем как QR товара
-  if (state.intakeBox && /^prod[a-z0-9\-_]+$/i.test(low) && !/^prod-?p\d+$/i.test(low) === false || state.intakeBox && /^prod[a-z0-9\-_]+$/i.test(low)){
-    // Это может быть и статический prodp1, и prod-sxxxx
-    if (low in state.intakeBox.expected || /^prod[a-z0-9\-_]+$/.test(low)){
-      handleProductScan(low);
-      return;
-    }
+  if (state.intakeBox && /^prod[a-z0-9\-_]+$/i.test(low)){
+    handleProductScan(low);
+    return;
   }
 
   try {
@@ -535,7 +525,6 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-/* ================= CONFIRM ================= */
 function openConfirm(type, data){
   state.confirmType = type; state.confirmData = data;
   renderConfirm(); openModal('confirmModal');
@@ -653,14 +642,13 @@ function renderReceiveConfirm(body, data){
   const { orderId, phone, order, boxCode } = data;
   const ib = state.intakeBox || { expected:{}, scanned:{} };
   const unitKeys = Object.keys(ib.expected || {});
-
-  // Если старый заказ без units — показываем состав и кнопку сразу
   const canConfirm = allScanned();
 
   let unitsHtml = '';
   if (unitKeys.length){
     unitsHtml = `<div class="card" style="margin-bottom:12px">
-      <div class="muted small" style="margin-bottom:8px">Отсканируйте QR каждого товара (2D-сканером):</div>
+      <div class="muted small" style="margin-bottom:8px">Отсканируйте QR каждого товара:</div>
+      <button class="btn ghost" id="btnScanItem" style="margin-bottom:10px">📷 Сканировать QR товара</button>
       ${unitKeys.map(q => {
         const got = ib.scanned[q]||0, need = ib.expected[q];
         return `<div class="unit-row ${got>=need?'done':''}">
@@ -678,7 +666,7 @@ function renderReceiveConfirm(body, data){
     <div class="cell-display"><div class="cell-label">Положить в ячейку</div><div class="cell-num">${order.cell||'—'}</div></div>
     <div class="card" style="margin-bottom:12px">
       <div class="muted small" style="margin-bottom:6px">Состав</div>
-      ${(order.items||[]).map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji||''} ${esc(i.name||'')} ×${i.qty||1}</div>`).join('')}
+      ${(order.items||[]).map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji?i.emoji+' ':''}${esc(i.name||'')} ×${i.qty||1}</div>`).join('')}
     </div>
     ${unitsHtml}
     <div class="card" style="margin-bottom:14px">
@@ -691,6 +679,15 @@ function renderReceiveConfirm(body, data){
   `;
   document.getElementById('btnConfirmClose').onclick = closeConfirm;
   document.getElementById('btnCancelReceive').onclick = closeConfirm;
+
+  const scanItemBtn = document.getElementById('btnScanItem');
+  if (scanItemBtn){
+    scanItemBtn.onclick = async () => {
+      state.scanMode = 'item';
+      openScannerForItem();
+    };
+  }
+
   document.getElementById('btnDoReceive').onclick = async () => {
     if (!allScanned()){ toast('Не все товары отсканированы','err'); return; }
     const btn = document.getElementById('btnDoReceive');
@@ -705,8 +702,8 @@ function renderReceiveConfirm(body, data){
   };
 }
 
-/* ================= КАМЕРА ================= */
 let scanner = null, scanBusy = false;
+
 async function openScanner(mode){
   state.scanMode = mode;
   const title = mode === 'issue' ? 'Сканировать заказ клиента' : 'Сканировать QR коробки';
@@ -738,6 +735,37 @@ async function openScanner(mode){
     toast('Камера недоступна — введите код вручную','err');
   }
 }
+
+async function openScannerForItem(){
+  document.getElementById('scanTitle').textContent = 'Сканировать QR товара';
+  document.getElementById('scanHint').textContent = 'Наведите на QR-код на упаковке товара';
+  const inp = document.getElementById('scanInput');
+  inp.value = '';
+  inp.placeholder = 'prod...';
+  inp.className = 'input';
+  inp.oninput = (e) => {
+    e.target.value = e.target.value.trim().toLowerCase();
+  };
+  openModal('scanModal');
+  if (!scanner){
+    try { scanner = new Html5Qrcode('qrReader'); } catch(e){ return; }
+  }
+  scanBusy = false;
+  try {
+    await scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } },
+      (text) => {
+        if (scanBusy) return;
+        scanBusy = true;
+        stopScanner();
+        closeModal('scanModal');
+        handleProductScan(text);
+        scanBusy = false;
+      }, () => {});
+  } catch(err){
+    toast('Камера недоступна — введите код вручную','err');
+  }
+}
+
 async function stopScanner(){ if (scanner){ try { await scanner.stop(); } catch(e){} } }
 async function onScan(text){
   if (scanBusy) return;
@@ -747,7 +775,8 @@ async function onScan(text){
   const mode = state.scanMode;
   try {
     if (mode === 'issue') await handleIssueLookup({ qr: text });
-    else await handleIntakeLookup(text);
+    else if (mode === 'intake') await handleIntakeLookup(text);
+    else if (mode === 'item') handleProductScan(text);
   } catch(err){ toast(err.message,'err'); }
   scanBusy = false;
 }
@@ -760,11 +789,11 @@ document.getElementById('btnScanManualGo').onclick = async () => {
   closeModal('scanModal'); await stopScanner();
   try {
     if (mode === 'issue') await handleIssueLookup({ code: v });
-    else await handleIntakeLookup(v);
+    else if (mode === 'intake') await handleIntakeLookup(v);
+    else if (mode === 'item') handleProductScan(v);
   } catch(err){ toast(err.message,'err'); }
 };
 
-/* ================= RENDER ================= */
 function render(){
   if (!state.pvzId || !state.pvz){ renderLogin(); return; }
   const pvz = state.pvz, tab = state.tab;
