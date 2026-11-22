@@ -90,12 +90,46 @@ select.input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg 
 .queue-actions .btn{width:auto;padding:6px 10px;font-size:12px;margin:0}
 .hint-box{padding:12px;border-radius:12px;background:rgba(91,156,255,.08);
   border:1px dashed rgba(91,156,255,.3);font-size:13px;color:#a5b8ff;margin-top:10px}
+
+/* ===== 2D-СКАНЕР ===== */
+.scanner-bar{
+  display:flex;align-items:center;gap:12px;padding:14px;
+  background:linear-gradient(135deg,rgba(91,156,255,.1),rgba(124,91,255,.1));
+  border:1px solid rgba(91,156,255,.35);border-radius:14px;margin-bottom:14px;
+  position:relative;overflow:hidden;transition:background .25s,box-shadow .25s,border-color .25s;
+}
+.scanner-bar.flash{
+  background:linear-gradient(135deg,rgba(37,209,138,.2),rgba(37,209,138,.08));
+  border-color:var(--ok);box-shadow:0 0 0 3px rgba(37,209,138,.25);
+}
+.scanner-bar.error{
+  background:linear-gradient(135deg,rgba(255,91,110,.2),rgba(255,91,110,.08));
+  border-color:var(--err);box-shadow:0 0 0 3px rgba(255,91,110,.25);
+}
+.scanner-icon{font-size:24px;flex-shrink:0}
+.scanner-text{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
+.scanner-text b{font-size:14px}
+.scanner-text span{font-size:11px;color:var(--muted);line-height:1.3}
+.scanner-pulse{
+  width:10px;height:10px;border-radius:50%;background:var(--ok);flex-shrink:0;
+  box-shadow:0 0 0 0 rgba(37,209,138,.6);
+  animation:pulse 1.6s infinite;
+}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(37,209,138,.6)}
+  70%{box-shadow:0 0 0 10px rgba(37,209,138,0)}
+  100%{box-shadow:0 0 0 0 rgba(37,209,138,0)}
+}
+.scanner-buffer{
+  font-family:monospace;font-size:11px;color:var(--muted);
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
 </style>
 </head>
 <body>
 <div class="wrap" id="root"></div>
 
-<!-- Универсальный сканер -->
+<!-- Универсальный сканер (камера) -->
 <div id="scanModal" class="modal">
   <div class="modal-body">
     <div class="modal-head"><b id="scanTitle">Сканировать</b>
@@ -104,6 +138,9 @@ select.input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg 
     <p class="muted small" style="text-align:center;margin:14px 0 8px" id="scanHint">или введите код</p>
     <input id="scanInput" class="input" placeholder="" autocomplete="off"/>
     <button class="btn" id="btnScanManualGo">Продолжить</button>
+    <p class="muted small" style="text-align:center;margin-top:12px;opacity:.7">
+      💡 Также можно просто сканировать 2D-сканером — без открытия камеры
+    </p>
   </div>
 </div>
 
@@ -162,9 +199,9 @@ const state = {
   pvzId: null, pvz: null, tab: 'issue',
   recentIssued: {}, recentIntake: {}, recentReturns: {},
   pvzOrders: {},
-  activeOrders: {},   // очередь в работе (localStorage)
-  scanMode: 'issue',  // 'issue' | 'intake'
-  confirmType: null,  // 'queue' | 'return'
+  activeOrders: {},
+  scanMode: 'issue',
+  confirmType: null,
   confirmData: null,
 };
 let unsubPvz = null, unsubIssued = null, unsubIntake = null, unsubReturns = null, unsubOrders = null;
@@ -175,7 +212,7 @@ function renderSoon(){
   requestAnimationFrame(()=>{ renderPending = false; render(); });
 }
 
-/* ================= ОЧЕРЕДЬ (localStorage) ================= */
+/* ================= ОЧЕРЕДЬ ================= */
 function queueKey(){ return 'pvz_queue_' + state.pvzId; }
 function loadQueue(){
   try {
@@ -286,16 +323,12 @@ function subscribe(pvzId){
     const filtered = {};
     for (const [id, o] of Object.entries(all)) if (o.pvzId === pvzId) filtered[id] = o;
     state.pvzOrders = filtered;
-    // авто-очистка очереди от заказов, которые больше не ready
     let changed = false;
     for (const id of Object.keys(state.activeOrders)){
       const o = filtered[id];
       if (!o || o.status !== 'ready'){
-        // Если заказ исчез — убираем. Если статус сменился — тоже убираем, чтобы не сбивать с толку.
-        if (!state.activeOrders[id].keepOnStatusChange){
-          delete state.activeOrders[id];
-          changed = true;
-        }
+        delete state.activeOrders[id];
+        changed = true;
       }
     }
     if (changed) saveQueue();
@@ -411,7 +444,6 @@ async function returnOrder(orderId, phone, reason){
     phone, code6: o.code6, cell: o.cell, reason, returnedAt: Date.now()
   };
   await db.ref().update(updates);
-  // убираем из очереди, если был
   removeFromQueue(orderId);
 }
 
@@ -424,7 +456,6 @@ async function handleIssueLookup(input){
   if (result.order.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
 
   if (result.order.status === 'issued'){
-    // Уже выдан — значит возврат
     openReturnForm(result);
     return;
   }
@@ -433,7 +464,6 @@ async function handleIssueLookup(input){
     throw new Error('Заказ ещё не поступил в ПВЗ. Примите коробку во вкладке «Приёмка»');
   if (result.order.status !== 'ready') throw new Error('Неизвестный статус: ' + statusLabel(result.order.status));
 
-  // ready → в очередь
   const added = addToQueue(result.orderId, result.phone, result.order);
   render();
   if (added) toast('Добавлен в работу · ячейка ' + result.order.cell, 'ok');
@@ -448,6 +478,85 @@ async function handleIntakeLookup(boxCode){
     throw new Error('Заказ в недопустимом статусе');
   showReceiveConfirm(result);
 }
+
+/* ================= УНИВЕРСАЛЬНЫЙ 2D-СКАНЕР ================= */
+let globalScanBuffer = '';
+let globalScanLastTime = 0;
+const SCAN_TIMEOUT_MS = 120;   // пауза между символами >120мс = сброс буфера (значит не скан)
+const SCAN_MIN_LEN = 4;        // минимум символов для скана
+
+function flashScannerBar(ok){
+  const bar = document.getElementById('scannerBar');
+  if (!bar) return;
+  bar.classList.remove('flash','error');
+  bar.classList.add(ok ? 'flash' : 'error');
+  clearTimeout(bar._flashTimer);
+  bar._flashTimer = setTimeout(() => bar.classList.remove('flash','error'), 700);
+}
+
+async function handleGlobalScan(raw){
+  const v = String(raw||'').trim();
+  if (!v) return;
+  console.log('[2D scan]', v);
+
+  const low = v.toLowerCase();
+  try {
+    if (/^mkt:/i.test(v)){
+      // QR клиента
+      flashScannerBar(true);
+      await handleIssueLookup({ qr: v });
+    } else if (/^box\d{9}$/.test(low)){
+      // QR коробки
+      flashScannerBar(true);
+      await handleIntakeLookup(low);
+    } else if (/^\d{6}$/.test(v)){
+      // 6-значный код клиента
+      flashScannerBar(true);
+      await handleIssueLookup({ code: v });
+    } else if (/^[a-z0-9_-]{15,}$/i.test(v)){
+      // Просто orderId (совместимость)
+      flashScannerBar(true);
+      await handleIssueLookup({ qr: 'mkt:' + v });
+    } else {
+      flashScannerBar(false);
+      toast('Неизвестный QR: ' + v.slice(0, 40), 'err');
+    }
+  } catch(err){
+    flashScannerBar(false);
+    toast(err.message, 'err');
+  }
+}
+
+// Глобальный слушатель: собирает быстрый ввод с любой клавиатуры (2D-сканер)
+document.addEventListener('keydown', (e) => {
+  // Если фокус в поле ввода — не перехватываем (кроме самого сканера, но у нас его нет)
+  const ae = document.activeElement;
+  const isEditable = ae && ['INPUT','TEXTAREA','SELECT'].includes(ae.tagName);
+  if (isEditable) return;
+
+  const now = Date.now();
+  if (now - globalScanLastTime > SCAN_TIMEOUT_MS) globalScanBuffer = '';
+  globalScanLastTime = now;
+
+  if (e.key === 'Enter' || e.keyCode === 13){
+    const buf = globalScanBuffer.trim();
+    globalScanBuffer = '';
+    if (buf.length >= SCAN_MIN_LEN){
+      e.preventDefault();
+      e.stopPropagation();
+      handleGlobalScan(buf);
+    }
+    return;
+  }
+
+  // Символы (не Ctrl/Alt/Meta)
+  if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey){
+    globalScanBuffer += e.key;
+    // обновляем визуальный индикатор буфера
+    const bufEl = document.getElementById('scannerBuffer');
+    if (bufEl) bufEl.textContent = globalScanBuffer.slice(-24);
+  }
+});
 
 /* ================= CONFIRM-МОДАЛ ================= */
 function openConfirm(type, data){
@@ -506,7 +615,6 @@ function renderQueueConfirm(body, data){
       closeConfirm();
     } catch(err){
       toast(err.message, 'err');
-      // если заказ уже не ready — убираем
       if (/уже выдан|возвращён|статус/i.test(err.message)){
         removeFromQueue(orderId);
         closeConfirm();
@@ -515,7 +623,6 @@ function renderQueueConfirm(body, data){
     }
   };
   document.getElementById('btnQueueReturn').onclick = async () => {
-    // перепроверяем актуальный заказ
     try {
       const oSnap = await db.ref('users/'+item.phone+'/orders/'+orderId).once('value');
       if (!oSnap.exists()) throw new Error('Заказ не найден');
@@ -637,7 +744,7 @@ function renderReceiveConfirm(body, data){
   };
 }
 
-/* ================= СКАНЕР ================= */
+/* ================= КАМЕРА-СКАНЕР ================= */
 let scanner = null, scanBusy = false;
 async function openScanner(mode){
   state.scanMode = mode;
@@ -723,6 +830,16 @@ function render(){
       <button class="tab ${tab==='intake'?'active':''}" data-tab="intake">📦 Приёмка</button>
     </div>
     <div class="content">
+      <div class="scanner-bar" id="scannerBar">
+        <div class="scanner-icon">🎯</div>
+        <div class="scanner-text">
+          <b>2D-сканер активен</b>
+          <span>Сканируйте QR клиента (<code>mkt:…</code>) или коробки (<code>box…</code>) — в любом месте экрана</span>
+          <div class="scanner-buffer" id="scannerBuffer"></div>
+        </div>
+        <div class="scanner-pulse"></div>
+      </div>
+
       <h2>${esc(pvz.name)}</h2>
       <div class="card">
         <div class="info-row"><span>Город</span><b>${esc(getPvzCity(pvz)||'—')}</b></div>
@@ -773,12 +890,12 @@ function renderIssueTab(){
   return `
     <div class="card">
       <h3>Сканировать заказ клиента</h3>
-      <button class="btn" id="btnIssueScan">📷 Сканировать QR</button>
-      <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите 6-значный код</div>
+      <button class="btn" id="btnIssueScan">📷 Сканировать камерой</button>
+      <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите 6-значный код вручную</div>
       <input id="inlineIssueCode" class="input code-input" inputmode="numeric" maxlength="6" placeholder="000000"/>
       <button class="btn ghost" id="btnInlineIssueGo">Найти заказ</button>
       <div class="hint-box">
-        💡 Можно сканировать несколько заказов подряд — они соберутся в списке «В работе». Выдавайте, когда клиент готов.
+        🎯 <b>2D-сканер</b> — просто наведите и отсканируйте QR в любом месте экрана (не нужно открывать камеру).
         Если сканируете <b>уже выданный</b> заказ — сразу откроется форма возврата.
       </div>
     </div>
@@ -836,10 +953,13 @@ function renderIntakeTab(){
     <div class="card">
       <h3>Приёмка коробок</h3>
       <p class="muted small" style="margin:0 0 12px">Отсканируйте QR коробки (<b>box + 9 цифр</b>) или введите код</p>
-      <button class="btn blue" id="btnIntakeScan">📦 Сканировать QR коробки</button>
+      <button class="btn blue" id="btnIntakeScan">📦 Сканировать камерой</button>
       <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите код коробки</div>
       <input id="inlineIntakeCode" class="input" placeholder="box000000000" autocomplete="off"/>
       <button class="btn ghost" id="btnInlineIntakeGo">Принять коробку</button>
+      <div class="hint-box">
+        🎯 <b>2D-сканер</b> — просто наведите и отсканируйте QR коробки в любом месте экрана. Код автоматически определится по префиксу <code>box</code>.
+      </div>
     </div>
 
     ${intakeList.length ? `<div class="card">
