@@ -59,7 +59,7 @@ select.input{appearance:none;padding-right:36px}
   border-radius:10px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
 #qrReader{width:100%;min-height:220px;border-radius:14px;overflow:hidden;
   background:#0a1024;border:1px solid var(--border)}
-#qrReader video{border-radius:14px}
+#qrReader video, #inlineQrReader video{border-radius:14px}
 .cell-display{text-align:center;padding:20px;background:linear-gradient(135deg,#243066,#3a2a6e);
   border-radius:20px;margin-bottom:14px}
 .cell-num{font-size:48px;font-weight:800;color:#fff;line-height:1}
@@ -109,11 +109,16 @@ select.input{appearance:none;padding-right:36px}
   max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 .unit-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);
-  border-radius:10px;margin-bottom:6px;font-size:13px;border:1px solid var(--border)}
+  border-radius:10px;margin-bottom:6px;font-size:13px;border:1px solid var(--border);transition:all .2s}
 .unit-row.done{border-color:var(--ok);background:rgba(37,209,138,.1)}
 .unit-row .qr{font-family:monospace;font-weight:700;color:#a5b8ff}
 .unit-row .cnt{color:var(--muted);margin-left:auto;font-family:monospace}
 .unit-row.done .cnt{color:var(--ok)}
+
+.issue-item-row{display:flex;align-items:center;gap:10px;padding:10px;background:var(--card2);border-radius:10px;margin-bottom:6px;border:1px solid var(--border)}
+.issue-item-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);cursor:pointer;margin:0;flex-shrink:0}
+.issue-item-info{flex:1;font-size:14px;font-weight:600}
+.issue-item-price{font-weight:700;color:#a5b8ff}
 </style>
 </head>
 <body>
@@ -335,7 +340,7 @@ async function findOrderByBox(boxCode){
   return { orderId: data.orderId, phone: data.phone, order: oSnap.val(), boxCode: code };
 }
 
-async function issueOrder(orderId, phone){
+async function issueOrder(orderId, phone, issuedItems, returnedItems){
   const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
   if (!oSnap.exists()) throw new Error('Заказ не найден');
   const o = oSnap.val();
@@ -343,15 +348,55 @@ async function issueOrder(orderId, phone){
   if (o.status === 'returned') throw new Error('Заказ возвращён');
   if (o.status !== 'ready') throw new Error('Нельзя выдать: статус «' + statusLabel(o.status) + '»');
   if (o.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
+
   const updates = {};
+  const issuedTotal = issuedItems.reduce((s, i) => s + i.price * i.qty, 0);
+  
   updates['users/'+phone+'/orders/'+orderId+'/status'] = 'issued';
   updates['users/'+phone+'/orders/'+orderId+'/issuedAt'] = Date.now();
   updates['users/'+phone+'/orders/'+orderId+'/issuedBy'] = state.pvzId;
+  updates['users/'+phone+'/orders/'+orderId+'/items'] = issuedItems;
+  updates['users/'+phone+'/orders/'+orderId+'/total'] = issuedTotal;
+
   updates['orderIndex/'+orderId+'/status'] = 'issued';
+  updates['orderIndex/'+orderId+'/total'] = issuedTotal;
   updates['codeIndex/'+o.code6] = null;
   updates['pvzIssued/'+state.pvzId+'/'+orderId] = { phone, code6: o.code6, cell: o.cell, issuedAt: Date.now() };
+
+  // Если есть невыданные товары (сняты галочки), создаем отдельный заказ на возврат
+  if (returnedItems.length > 0) {
+    const retTotal = returnedItems.reduce((s, i) => s + i.price * i.qty, 0);
+    const retOrderRef = db.ref('users/'+phone+'/orders').push();
+    const retOrderId = retOrderRef.key;
+    const retOrder = {
+      items: returnedItems,
+      total: retTotal,
+      pvzId: o.pvzId,
+      pvzAddress: o.pvzAddress,
+      pvzName: o.pvzName,
+      code6: o.code6,
+      boxCode: o.boxCode,
+      cell: o.cell,
+      status: 'returned',
+      returnReason: 'Частичный возврат при выдаче',
+      ts: Date.now(),
+      returnedAt: Date.now()
+    };
+    updates['users/'+phone+'/orders/'+retOrderId] = retOrder;
+    updates['orderIndex/'+retOrderId] = {
+      phone, code6: o.code6, boxCode: o.boxCode, status: 'returned',
+      pvzId: o.pvzId, pvzName: o.pvzName, pvzCity: o.pvzCity,
+      cell: o.cell, total: retTotal, ts: Date.now(),
+      returnReason: 'Частичный возврат при выдаче'
+    };
+    updates['pvzReturns/'+state.pvzId+'/'+retOrderId] = {
+      phone, code6: o.code6, cell: o.cell, reason: 'Частичный возврат при выдаче', returnedAt: Date.now()
+    };
+  }
+  
   await db.ref().update(updates);
 }
+
 async function receiveOrder(orderId, phone, boxCode){
   const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
   if (!oSnap.exists()) throw new Error('Заказ не найден');
@@ -442,8 +487,18 @@ function handleProductScan(qr){
   ib.scanned[q]++;
   toast(`✓ ${q} (${ib.scanned[q]}/${ib.expected[q]})`, 'ok');
   flashScannerBar(true);
-  if (state.confirmType === 'receive') renderConfirm();
+  
+  if (state.confirmType === 'receive') {
+    // Если открыта встроенная камера, обновляем только список, чтобы не сбить камеру
+    const camWrap = document.getElementById('inlineCameraWrap');
+    if (camWrap && camWrap.style.display !== 'none') {
+      updateInlineReceiveUI();
+    } else {
+      renderConfirm();
+    }
+  }
 }
+
 function allScanned(){
   const ib = state.intakeBox;
   if (!ib) return true;
@@ -530,6 +585,7 @@ function openConfirm(type, data){
   renderConfirm(); openModal('confirmModal');
 }
 function closeConfirm(){
+  stopInlineCamera();
   state.confirmType = null; state.confirmData = null;
   state.intakeBox = null;
   closeModal('confirmModal');
@@ -546,36 +602,70 @@ function renderQueueConfirm(body, data){
   const { orderId } = data;
   const item = state.activeOrders[orderId];
   if (!item){ closeConfirm(); return; }
+  
   body.innerHTML = `
     <div class="modal-head"><b>Заказ в работе</b><button class="close-btn" id="btnConfirmClose">✕</button></div>
     <div class="cell-display"><div class="cell-label">Ячейка</div><div class="cell-num">${item.cell}</div></div>
-    <div class="card" style="margin-bottom:12px">
-      <div class="muted small" style="margin-bottom:6px">Состав</div>
-      ${(item.items||[]).map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji||''} ${esc(i.name||'')} ×${i.qty||1}</div>`).join('')}
-      <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <span class="muted">Итого</span><b>${fmt(item.total)}</b></div>
+    
+    <div class="muted small" style="margin-bottom:8px">Отметьте товары для выдачи (снятые галочки уйдут в возврат):</div>
+    <div id="issueItemsBox" style="margin-bottom:12px">
+      ${(item.items||[]).map((i, idx) => `
+        <label class="issue-item-row">
+          <input type="checkbox" class="issue-chk" data-idx="${idx}" checked/>
+          <div class="issue-item-info">${i.emoji||''} ${esc(i.name||'')} ×${i.qty||1}</div>
+          <div class="issue-item-price">${fmt(i.price*(i.qty||1))}</div>
+        </label>
+      `).join('')}
     </div>
+
+    <div style="display:flex;justify-content:space-between;margin-top:10px;padding:14px;background:var(--card2);border-radius:12px;margin-bottom:14px">
+      <span class="muted">Итого к выдаче</span><b id="modalTotal">${fmt(item.total)}</b>
+    </div>
+
     <div class="card" style="margin-bottom:14px">
       <div class="info-row"><span>Клиент</span><b>${esc(item.phone)}</b></div>
       <div class="info-row"><span>Код</span><b>${item.code6}</b></div>
     </div>
-    <button class="btn ok" id="btnQueueIssue">Выдать заказ</button>
-    <button class="btn err" id="btnQueueReturn" style="margin-top:4px">Оформить возврат</button>
+    <button class="btn ok" id="btnQueueIssue">Выдать выбранные</button>
+    <button class="btn ghost" id="btnQueueReturn" style="margin-top:4px">Оформить полный возврат</button>
     <button class="btn ghost" id="btnQueueDrop" style="margin-top:4px">Убрать из списка</button>
   `;
+
+  const updateTotal = () => {
+    let t = 0;
+    body.querySelectorAll('.issue-chk').forEach((chk, idx) => {
+      if (chk.checked) {
+        const i = item.items[idx];
+        t += i.price * i.qty;
+      }
+    });
+    document.getElementById('modalTotal').textContent = fmt(t);
+  };
+  body.querySelectorAll('.issue-chk').forEach(chk => chk.onchange = updateTotal);
+
   document.getElementById('btnConfirmClose').onclick = closeConfirm;
   document.getElementById('btnQueueIssue').onclick = async () => {
+    const selectedIdxs = [];
+    body.querySelectorAll('.issue-chk').forEach((chk, idx) => {
+      if (chk.checked) selectedIdxs.push(idx);
+    });
+    
+    if (!selectedIdxs.length) { toast('Выберите хотя бы один товар для выдачи', 'err'); return; }
+
+    const issued = item.items.filter((_, idx) => selectedIdxs.includes(idx));
+    const returned = item.items.filter((_, idx) => !selectedIdxs.includes(idx));
+
     const btn = document.getElementById('btnQueueIssue');
     btn.disabled = true; btn.textContent = 'Выдаём…';
     try {
-      await issueOrder(orderId, item.phone);
+      await issueOrder(orderId, item.phone, issued, returned);
       removeFromQueue(orderId);
-      toast('Заказ выдан', 'ok');
+      toast('Выдача оформлена', 'ok');
       closeConfirm();
     } catch(err){
       toast(err.message, 'err');
       if (/уже выдан|возвращён|статус/i.test(err.message)){ removeFromQueue(orderId); closeConfirm(); }
-      btn.disabled = false; btn.textContent = 'Выдать заказ';
+      btn.disabled = false; btn.textContent = 'Выдать выбранные';
     }
   };
   document.getElementById('btnQueueReturn').onclick = async () => {
@@ -648,14 +738,22 @@ function renderReceiveConfirm(body, data){
   if (unitKeys.length){
     unitsHtml = `<div class="card" style="margin-bottom:12px">
       <div class="muted small" style="margin-bottom:8px">Отсканируйте QR каждого товара:</div>
-      <button class="btn ghost" id="btnScanItem" style="margin-bottom:10px">📷 Сканировать QR товара</button>
-      ${unitKeys.map(q => {
-        const got = ib.scanned[q]||0, need = ib.expected[q];
-        return `<div class="unit-row ${got>=need?'done':''}">
-          <div class="qr">${esc(q)}</div>
-          <div class="cnt">${got}/${need}</div>
-        </div>`;
-      }).join('')}
+      
+      <div id="inlineCameraWrap" style="display:none; margin-bottom:10px;">
+        <div id="inlineQrReader" style="width:100%; border-radius:12px; overflow:hidden; background:#000; min-height:200px;"></div>
+        <button class="btn err small" id="btnStopInline" style="width:100%; margin-top:8px;">Остановить камеру</button>
+      </div>
+      <button class="btn blue" id="btnStartInlineScan" style="margin-bottom:10px;">📷 Включить камеру для сканирования</button>
+      
+      <div id="unitListBox">
+        ${unitKeys.map(q => {
+          const got = ib.scanned[q]||0, need = ib.expected[q];
+          return `<div class="unit-row ${got>=need?'done':''}" data-qr="${esc(q)}">
+            <div class="qr">${esc(q)}</div>
+            <div class="cnt">${got}/${need}</div>
+          </div>`;
+        }).join('')}
+      </div>
     </div>`;
   } else {
     unitsHtml = `<div class="hint-box" style="margin-bottom:12px">У этого заказа нет привязанных товарных QR (старый заказ). Можно принять без сверки.</div>`;
@@ -680,13 +778,10 @@ function renderReceiveConfirm(body, data){
   document.getElementById('btnConfirmClose').onclick = closeConfirm;
   document.getElementById('btnCancelReceive').onclick = closeConfirm;
 
-  const scanItemBtn = document.getElementById('btnScanItem');
-  if (scanItemBtn){
-    scanItemBtn.onclick = async () => {
-      state.scanMode = 'item';
-      openScannerForItem();
-    };
-  }
+  const startBtn = document.getElementById('btnStartInlineScan');
+  if (startBtn) startBtn.onclick = () => startInlineCamera();
+  const stopBtn = document.getElementById('btnStopInline');
+  if (stopBtn) stopBtn.onclick = () => stopInlineCamera();
 
   document.getElementById('btnDoReceive').onclick = async () => {
     if (!allScanned()){ toast('Не все товары отсканированы','err'); return; }
@@ -702,8 +797,61 @@ function renderReceiveConfirm(body, data){
   };
 }
 
-let scanner = null, scanBusy = false;
+// Функция для обновления только списка, чтобы камера не закрывалась
+function updateInlineReceiveUI() {
+  const ib = state.intakeBox;
+  if (!ib) return;
+  const unitKeys = Object.keys(ib.expected || {});
+  const canConfirm = allScanned();
+  const btn = document.getElementById('btnDoReceive');
+  if (btn) {
+    btn.disabled = !canConfirm;
+    btn.textContent = canConfirm ? 'Подтвердить приёмку' : 'Сначала отсканируйте все товары';
+  }
+  unitKeys.forEach(q => {
+    const row = document.querySelector(`.unit-row[data-qr="${q}"]`);
+    if (row) {
+      const got = ib.scanned[q]||0, need = ib.expected[q];
+      row.className = `unit-row ${got>=need?'done':''}`;
+      row.querySelector('.cnt').textContent = `${got}/${need}`;
+    }
+  });
+}
 
+// ===== КАМЕРА В МОДАЛЬНОМ ОКНЕ ПРИЁМКИ =====
+let inlineScanner = null;
+async function startInlineCamera() {
+  document.getElementById('btnStartInlineScan').style.display = 'none';
+  document.getElementById('inlineCameraWrap').style.display = 'block';
+  if (!inlineScanner) {
+    inlineScanner = new Html5Qrcode("inlineQrReader");
+  }
+  try {
+    await inlineScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (text) => {
+        // Сканируем без остановки камеры
+        handleProductScan(text);
+      },
+      () => {}
+    );
+  } catch (err) {
+    toast('Камера недоступна', 'err');
+  }
+}
+function stopInlineCamera() {
+  if (inlineScanner) {
+    try { inlineScanner.stop(); } catch(e){}
+  }
+  const wrap = document.getElementById('inlineCameraWrap');
+  const btn = document.getElementById('btnStartInlineScan');
+  if (wrap) wrap.style.display = 'none';
+  if (btn) btn.style.display = 'block';
+}
+
+// ===== ГЛОБАЛЬНЫЙ СКАНЕР И МОДАЛКА (для выдачи) =====
+let scanner = null, scanBusy = false;
 async function openScanner(mode){
   state.scanMode = mode;
   const title = mode === 'issue' ? 'Сканировать заказ клиента' : 'Сканировать QR коробки';
@@ -736,36 +884,6 @@ async function openScanner(mode){
   }
 }
 
-async function openScannerForItem(){
-  document.getElementById('scanTitle').textContent = 'Сканировать QR товара';
-  document.getElementById('scanHint').textContent = 'Наведите на QR-код на упаковке товара';
-  const inp = document.getElementById('scanInput');
-  inp.value = '';
-  inp.placeholder = 'prod...';
-  inp.className = 'input';
-  inp.oninput = (e) => {
-    e.target.value = e.target.value.trim().toLowerCase();
-  };
-  openModal('scanModal');
-  if (!scanner){
-    try { scanner = new Html5Qrcode('qrReader'); } catch(e){ return; }
-  }
-  scanBusy = false;
-  try {
-    await scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } },
-      (text) => {
-        if (scanBusy) return;
-        scanBusy = true;
-        stopScanner();
-        closeModal('scanModal');
-        handleProductScan(text);
-        scanBusy = false;
-      }, () => {});
-  } catch(err){
-    toast('Камера недоступна — введите код вручную','err');
-  }
-}
-
 async function stopScanner(){ if (scanner){ try { await scanner.stop(); } catch(e){} } }
 async function onScan(text){
   if (scanBusy) return;
@@ -776,7 +894,6 @@ async function onScan(text){
   try {
     if (mode === 'issue') await handleIssueLookup({ qr: text });
     else if (mode === 'intake') await handleIntakeLookup(text);
-    else if (mode === 'item') handleProductScan(text);
   } catch(err){ toast(err.message,'err'); }
   scanBusy = false;
 }
@@ -790,7 +907,6 @@ document.getElementById('btnScanManualGo').onclick = async () => {
   try {
     if (mode === 'issue') await handleIssueLookup({ code: v });
     else if (mode === 'intake') await handleIntakeLookup(v);
-    else if (mode === 'item') handleProductScan(v);
   } catch(err){ toast(err.message,'err'); }
 };
 
