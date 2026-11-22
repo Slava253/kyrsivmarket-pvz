@@ -30,8 +30,7 @@ h3{font-size:15px;color:var(--muted);font-weight:600;margin:0 0 10px}
   background:#0f1530;color:var(--text);font-size:15px;margin-bottom:10px;font-family:inherit;outline:none}
 .input:focus{border-color:var(--accent)}
 textarea.input{resize:vertical;min-height:70px;font-family:inherit}
-select.input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' stroke='%238b95c2' stroke-width='1.5' fill='none'/></svg>");
-  background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+select.input{appearance:none;padding-right:36px}
 .code-input{letter-spacing:8px;text-align:center;font-size:22px;font-family:monospace}
 .btn{width:100%;padding:13px;border-radius:12px;border:none;cursor:pointer;font-size:15px;font-weight:600;
   background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:inherit;transition:transform .1s;margin-bottom:8px}
@@ -53,7 +52,7 @@ select.input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg 
   display:none;align-items:center;justify-content:center;padding:20px}
 .modal.show{display:flex}
 .modal-body{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;
-  width:100%;max-width:440px;max-height:92vh;overflow-y:auto}
+  width:100%;max-width:460px;max-height:92vh;overflow-y:auto}
 .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
 .modal-head b{font-size:17px}
 .close-btn{background:transparent;border:1px solid var(--border);color:var(--muted);width:32px;height:32px;
@@ -91,63 +90,45 @@ select.input{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg 
 .hint-box{padding:12px;border-radius:12px;background:rgba(91,156,255,.08);
   border:1px dashed rgba(91,156,255,.3);font-size:13px;color:#a5b8ff;margin-top:10px}
 
-/* ===== 2D-СКАНЕР ===== */
-.scanner-bar{
-  display:flex;align-items:center;gap:12px;padding:14px;
+.scanner-bar{display:flex;align-items:center;gap:12px;padding:14px;
   background:linear-gradient(135deg,rgba(91,156,255,.1),rgba(124,91,255,.1));
-  border:1px solid rgba(91,156,255,.35);border-radius:14px;margin-bottom:14px;
-  position:relative;overflow:hidden;transition:background .25s,box-shadow .25s,border-color .25s;
-}
-.scanner-bar.flash{
-  background:linear-gradient(135deg,rgba(37,209,138,.2),rgba(37,209,138,.08));
-  border-color:var(--ok);box-shadow:0 0 0 3px rgba(37,209,138,.25);
-}
-.scanner-bar.error{
-  background:linear-gradient(135deg,rgba(255,91,110,.2),rgba(255,91,110,.08));
-  border-color:var(--err);box-shadow:0 0 0 3px rgba(255,91,110,.25);
-}
+  border:1px solid rgba(91,156,255,.35);border-radius:14px;margin-bottom:14px;position:relative;overflow:hidden;
+  transition:background .25s,box-shadow .25s,border-color .25s}
+.scanner-bar.flash{background:linear-gradient(135deg,rgba(37,209,138,.2),rgba(37,209,138,.08));
+  border-color:var(--ok);box-shadow:0 0 0 3px rgba(37,209,138,.25)}
+.scanner-bar.error{background:linear-gradient(135deg,rgba(255,91,110,.2),rgba(255,91,110,.08));
+  border-color:var(--err);box-shadow:0 0 0 3px rgba(255,91,110,.25)}
 .scanner-icon{font-size:24px;flex-shrink:0}
 .scanner-text{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
 .scanner-text b{font-size:14px}
 .scanner-text span{font-size:11px;color:var(--muted);line-height:1.3}
-.scanner-pulse{
-  width:10px;height:10px;border-radius:50%;background:var(--ok);flex-shrink:0;
-  box-shadow:0 0 0 0 rgba(37,209,138,.6);
-  animation:pulse 1.6s infinite;
-}
-@keyframes pulse{
-  0%{box-shadow:0 0 0 0 rgba(37,209,138,.6)}
-  70%{box-shadow:0 0 0 10px rgba(37,209,138,0)}
-  100%{box-shadow:0 0 0 0 rgba(37,209,138,0)}
-}
-.scanner-buffer{
-  font-family:monospace;font-size:11px;color:var(--muted);
-  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
+.scanner-pulse{width:10px;height:10px;border-radius:50%;background:var(--ok);flex-shrink:0;
+  box-shadow:0 0 0 0 rgba(37,209,138,.6);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(37,209,138,.6)}70%{box-shadow:0 0 0 10px rgba(37,209,138,0)}100%{box-shadow:0 0 0 0 rgba(37,209,138,0)}}
+.scanner-buffer{font-family:monospace;font-size:11px;color:var(--muted);
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.unit-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);
+  border-radius:10px;margin-bottom:6px;font-size:13px;border:1px solid var(--border)}
+.unit-row.done{border-color:var(--ok);background:rgba(37,209,138,.1)}
+.unit-row .qr{font-family:monospace;font-weight:700;color:#a5b8ff}
+.unit-row .cnt{color:var(--muted);margin-left:auto;font-family:monospace}
+.unit-row.done .cnt{color:var(--ok)}
 </style>
 </head>
 <body>
 <div class="wrap" id="root"></div>
 
-<!-- Универсальный сканер (камера) -->
-<div id="scanModal" class="modal">
-  <div class="modal-body">
-    <div class="modal-head"><b id="scanTitle">Сканировать</b>
-      <button class="close-btn" id="btnScanClose">✕</button></div>
-    <div id="qrReader"></div>
-    <p class="muted small" style="text-align:center;margin:14px 0 8px" id="scanHint">или введите код</p>
-    <input id="scanInput" class="input" placeholder="" autocomplete="off"/>
-    <button class="btn" id="btnScanManualGo">Продолжить</button>
-    <p class="muted small" style="text-align:center;margin-top:12px;opacity:.7">
-      💡 Также можно просто сканировать 2D-сканером — без открытия камеры
-    </p>
-  </div>
-</div>
+<div id="scanModal" class="modal"><div class="modal-body">
+  <div class="modal-head"><b id="scanTitle">Сканировать</b><button class="close-btn" id="btnScanClose">✕</button></div>
+  <div id="qrReader"></div>
+  <p class="muted small" style="text-align:center;margin:14px 0 8px" id="scanHint">или введите код</p>
+  <input id="scanInput" class="input" placeholder="" autocomplete="off"/>
+  <button class="btn" id="btnScanManualGo">Продолжить</button>
+  <p class="muted small" style="text-align:center;margin-top:12px;opacity:.7">💡 2D-сканер работает без открытия камеры</p>
+</div></div>
 
-<!-- Универсальный confirm-модал -->
-<div id="confirmModal" class="modal">
-  <div class="modal-body" id="confirmBody"></div>
-</div>
+<div id="confirmModal" class="modal"><div class="modal-body" id="confirmBody"></div></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -179,7 +160,6 @@ function toast(msg, type){
 }
 function openModal(id){ document.getElementById(id).classList.add('show'); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-
 function statusLabel(s){
   if (s === 'pending' || s === 'transit') return 'В пути';
   if (s === 'ready') return 'Готов к выдаче';
@@ -194,59 +174,45 @@ function getPvzCity(pvz){
   return parts[0] ? parts[0].trim() : '';
 }
 
-/* ================= СОСТОЯНИЕ ================= */
 const state = {
-  pvzId: null, pvz: null, tab: 'issue',
-  recentIssued: {}, recentIntake: {}, recentReturns: {},
-  pvzOrders: {},
-  activeOrders: {},
-  scanMode: 'issue',
-  confirmType: null,
-  confirmData: null,
+  pvzId:null, pvz:null, tab:'issue',
+  recentIssued:{}, recentIntake:{}, recentReturns:{},
+  pvzOrders:{}, activeOrders:{},
+  scanMode:'issue',
+  confirmType:null, confirmData:null,
+  intakeBox: null, // { orderId, phone, order, boxCode, expected:{qr:count}, scanned:{qr:count} }
 };
-let unsubPvz = null, unsubIssued = null, unsubIntake = null, unsubReturns = null, unsubOrders = null;
-let renderPending = false;
+let unsubPvz=null, unsubIssued=null, unsubIntake=null, unsubReturns=null, unsubOrders=null;
+let renderPending=false;
 function renderSoon(){
   if (renderPending) return;
   renderPending = true;
   requestAnimationFrame(()=>{ renderPending = false; render(); });
 }
 
-/* ================= ОЧЕРЕДЬ ================= */
 function queueKey(){ return 'pvz_queue_' + state.pvzId; }
 function loadQueue(){
   try {
     const raw = localStorage.getItem(queueKey());
     if (!raw) return {};
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return {};
-    return parsed;
+    const p = JSON.parse(raw);
+    return (p && typeof p === 'object') ? p : {};
   } catch(e){ return {}; }
 }
 function saveQueue(){
   try { localStorage.setItem(queueKey(), JSON.stringify(state.activeOrders)); } catch(e){}
 }
 function addToQueue(orderId, phone, order){
-  if (state.activeOrders[orderId]){
-    toast('Заказ уже в списке в работе', 'err');
-    return false;
-  }
+  if (state.activeOrders[orderId]){ toast('Заказ уже в списке в работе','err'); return false; }
   state.activeOrders[orderId] = {
-    orderId, phone,
-    code6: order.code6, cell: order.cell,
-    items: order.items || [], total: order.total || 0,
-    addedAt: Date.now()
+    orderId, phone, code6: order.code6, cell: order.cell,
+    items: order.items||[], total: order.total||0, addedAt: Date.now()
   };
-  saveQueue();
-  return true;
+  saveQueue(); return true;
 }
-function removeFromQueue(orderId){
-  delete state.activeOrders[orderId];
-  saveQueue();
-}
+function removeFromQueue(orderId){ delete state.activeOrders[orderId]; saveQueue(); }
 function queueCount(){ return Object.keys(state.activeOrders).length; }
 
-/* ================= АВТОРИЗАЦИЯ ================= */
 function renderLogin(){
   document.getElementById('root').innerHTML = `
     <div class="login-wrap"><div class="panel">
@@ -280,25 +246,17 @@ function renderLogin(){
   };
   document.getElementById('btnLogin').onclick = go;
   document.getElementById('passInput').addEventListener('keydown', e => { if (e.key==='Enter') go(); });
-  document.getElementById('loginInput').addEventListener('keydown', e => { if (e.key==='Enter') go(); });
 }
 
 function subscribe(pvzId){
   state.pvzId = pvzId;
-  if (unsubPvz){ try { unsubPvz(); } catch(e){} unsubPvz = null; }
-  if (unsubIssued){ try { unsubIssued(); } catch(e){} unsubIssued = null; }
-  if (unsubIntake){ try { unsubIntake(); } catch(e){} unsubIntake = null; }
-  if (unsubReturns){ try { unsubReturns(); } catch(e){} unsubReturns = null; }
-  if (unsubOrders){ try { unsubOrders(); } catch(e){} unsubOrders = null; }
+  [unsubPvz, unsubIssued, unsubIntake, unsubReturns, unsubOrders].forEach(f => { if (f) try{f();}catch(e){} });
+  unsubPvz = unsubIssued = unsubIntake = unsubReturns = unsubOrders = null;
 
   state.activeOrders = loadQueue();
 
   const pvzRef = db.ref('pvz/'+pvzId);
-  const pvzCb = snap => {
-    if (!snap.exists()){ logout(); return; }
-    state.pvz = snap.val();
-    renderSoon();
-  };
+  const pvzCb = snap => { if (!snap.exists()){ logout(); return; } state.pvz = snap.val(); renderSoon(); };
   pvzRef.on('value', pvzCb);
   unsubPvz = () => pvzRef.off('value', pvzCb);
 
@@ -326,10 +284,7 @@ function subscribe(pvzId){
     let changed = false;
     for (const id of Object.keys(state.activeOrders)){
       const o = filtered[id];
-      if (!o || o.status !== 'ready'){
-        delete state.activeOrders[id];
-        changed = true;
-      }
+      if (!o || o.status !== 'ready'){ delete state.activeOrders[id]; changed = true; }
     }
     if (changed) saveQueue();
     renderSoon();
@@ -339,23 +294,18 @@ function subscribe(pvzId){
 }
 
 function logout(){
-  if (unsubPvz){ try { unsubPvz(); } catch(e){} unsubPvz = null; }
-  if (unsubIssued){ try { unsubIssued(); } catch(e){} unsubIssued = null; }
-  if (unsubIntake){ try { unsubIntake(); } catch(e){} unsubIntake = null; }
-  if (unsubReturns){ try { unsubReturns(); } catch(e){} unsubReturns = null; }
-  if (unsubOrders){ try { unsubOrders(); } catch(e){} unsubOrders = null; }
-
+  [unsubPvz, unsubIssued, unsubIntake, unsubReturns, unsubOrders].forEach(f => { if (f) try{f();}catch(e){} });
+  unsubPvz = unsubIssued = unsubIntake = unsubReturns = unsubOrders = null;
   localStorage.removeItem('pvz_session');
-  state.pvzId = null; state.pvz = null;
-  state.recentIssued = {}; state.recentIntake = {}; state.recentReturns = {};
-  state.pvzOrders = {}; state.activeOrders = {};
-  state.confirmType = null; state.confirmData = null;
+  state.pvzId=null; state.pvz=null;
+  state.recentIssued={}; state.recentIntake={}; state.recentReturns={};
+  state.pvzOrders={}; state.activeOrders={}; state.intakeBox=null;
   render();
 }
 
-/* ================= ПОИСК ЗАКАЗОВ ================= */
+/* ================= ПОИСК ================= */
 async function findOrderByQr(qrText){
-  const orderId = String(qrText||'').trim().replace(/^mkt:/i, '').replace(/%3A/gi, ':').trim();
+  const orderId = String(qrText||'').trim().replace(/^mkt:/i,'').trim();
   if (!orderId) throw new Error('Пустой QR-код');
   const idx = await db.ref('orderIndex/'+orderId).once('value');
   if (!idx.exists()) throw new Error('Заказ не найден');
@@ -368,7 +318,7 @@ async function findOrderByCode(code6){
   code6 = digits(code6);
   if (code6.length !== 6) throw new Error('Код должен быть из 6 цифр');
   const idx = await db.ref('codeIndex/'+code6).once('value');
-  if (!idx.exists()) throw new Error('Код не найден или уже использован');
+  if (!idx.exists()) throw new Error('Код не найден');
   const { orderId, phone } = idx.val();
   const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
   if (!oSnap.exists()) throw new Error('Заказ не найден');
@@ -401,53 +351,43 @@ async function issueOrder(orderId, phone){
   updates['users/'+phone+'/orders/'+orderId+'/issuedBy'] = state.pvzId;
   updates['orderIndex/'+orderId+'/status'] = 'issued';
   updates['codeIndex/'+o.code6] = null;
-  updates['pvzIssued/'+state.pvzId+'/'+orderId] = {
-    phone, code6: o.code6, cell: o.cell, issuedAt: Date.now()
-  };
+  updates['pvzIssued/'+state.pvzId+'/'+orderId] = { phone, code6: o.code6, cell: o.cell, issuedAt: Date.now() };
   await db.ref().update(updates);
 }
-
 async function receiveOrder(orderId, phone, boxCode){
   const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
   if (!oSnap.exists()) throw new Error('Заказ не найден');
   const o = oSnap.val();
   if (o.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
-  if (o.status !== 'transit' && o.status !== 'pending') throw new Error('Заказ в недопустимом статусе: ' + statusLabel(o.status));
+  if (o.status !== 'transit' && o.status !== 'pending') throw new Error('Заказ в недопустимом статусе');
   const updates = {};
   updates['users/'+phone+'/orders/'+orderId+'/status'] = 'ready';
   updates['users/'+phone+'/orders/'+orderId+'/receivedAt'] = Date.now();
   updates['orderIndex/'+orderId+'/status'] = 'ready';
-  updates['pvzIntake/'+state.pvzId+'/'+orderId] = {
-    phone, boxCode, cell: o.cell, receivedAt: Date.now()
-  };
+  updates['pvzIntake/'+state.pvzId+'/'+orderId] = { phone, boxCode, cell: o.cell, receivedAt: Date.now() };
   await db.ref().update(updates);
 }
-
 async function returnOrder(orderId, phone, reason){
   reason = String(reason||'').trim();
-  if (reason.length < 3) throw new Error('Укажите причину возврата (минимум 3 символа)');
+  if (reason.length < 3) throw new Error('Причина минимум 3 символа');
   const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
   if (!oSnap.exists()) throw new Error('Заказ не найден');
   const o = oSnap.val();
   if (o.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
-  if (o.status === 'returned') throw new Error('Заказ уже возвращён');
-  if (o.status !== 'issued' && o.status !== 'ready')
-    throw new Error('Возврат возможен только для готовых или выданных заказов');
+  if (o.status === 'returned') throw new Error('Уже возвращён');
+  if (o.status !== 'issued' && o.status !== 'ready') throw new Error('Возврат только для готовых/выданных');
   const updates = {};
   updates['users/'+phone+'/orders/'+orderId+'/status'] = 'returned';
   updates['users/'+phone+'/orders/'+orderId+'/returnReason'] = reason;
   updates['users/'+phone+'/orders/'+orderId+'/returnedAt'] = Date.now();
-  updates['users/'+phone+'/orders/'+orderId+'/returnedBy'] = state.pvzId;
   updates['orderIndex/'+orderId+'/status'] = 'returned';
   updates['orderIndex/'+orderId+'/returnReason'] = reason;
-  updates['pvzReturns/'+state.pvzId+'/'+orderId] = {
-    phone, code6: o.code6, cell: o.cell, reason, returnedAt: Date.now()
-  };
+  updates['pvzReturns/'+state.pvzId+'/'+orderId] = { phone, code6: o.code6, cell: o.cell, reason, returnedAt: Date.now() };
   await db.ref().update(updates);
   removeFromQueue(orderId);
 }
 
-/* ================= ЛОГИКА СКАНА ================= */
+/* ================= ПОИСК ОПЕРАЦИЙ ================= */
 async function handleIssueLookup(input){
   let result;
   if (input.qr) result = await findOrderByQr(input.qr);
@@ -455,14 +395,11 @@ async function handleIssueLookup(input){
   else throw new Error('Нет данных');
   if (result.order.pvzId !== state.pvzId) throw new Error('Заказ другого ПВЗ');
 
-  if (result.order.status === 'issued'){
-    openReturnForm(result);
-    return;
-  }
+  if (result.order.status === 'issued'){ openConfirm('return', result); return; }
   if (result.order.status === 'returned') throw new Error('Заказ уже возвращён');
   if (result.order.status === 'transit' || result.order.status === 'pending')
-    throw new Error('Заказ ещё не поступил в ПВЗ. Примите коробку во вкладке «Приёмка»');
-  if (result.order.status !== 'ready') throw new Error('Неизвестный статус: ' + statusLabel(result.order.status));
+    throw new Error('Заказ ещё не поступил. Сначала примите коробку');
+  if (result.order.status !== 'ready') throw new Error('Неизвестный статус');
 
   const added = addToQueue(result.orderId, result.phone, result.order);
   render();
@@ -476,14 +413,55 @@ async function handleIntakeLookup(boxCode){
   if (result.order.status === 'returned') throw new Error('Заказ возвращён');
   if (result.order.status !== 'transit' && result.order.status !== 'pending')
     throw new Error('Заказ в недопустимом статусе');
-  showReceiveConfirm(result);
+
+  // Инициализируем состояние сканирования товаров
+  const units = Array.isArray(result.order.units) ? result.order.units : [];
+  const expected = {};
+  const scanned = {};
+  for (const u of units){
+    const q = String(u.qr||'').toLowerCase();
+    if (!q) continue;
+    expected[q] = (expected[q] || 0) + 1;
+    scanned[q] = 0;
+  }
+  state.intakeBox = { ...result, boxCode: result.boxCode, expected, scanned, units };
+  openConfirm('receive', { ...result, boxCode: result.boxCode });
 }
 
-/* ================= УНИВЕРСАЛЬНЫЙ 2D-СКАНЕР ================= */
+// обработка скана QR товара при приёмке
+function handleProductScan(qr){
+  const ib = state.intakeBox;
+  if (!ib){ toast('Сначала отсканируйте коробку','err'); return; }
+  const q = String(qr||'').trim().toLowerCase();
+  if (!q) return;
+  if (!(q in ib.expected)){
+    toast('Этот QR не относится к коробке: ' + q, 'err');
+    flashScannerBar(false);
+    return;
+  }
+  if (ib.scanned[q] >= ib.expected[q]){
+    toast('Уже отсканировано нужное кол-во: ' + q, 'err');
+    flashScannerBar(false);
+    return;
+  }
+  ib.scanned[q]++;
+  toast(`✓ ${q} (${ib.scanned[q]}/${ib.expected[q]})`, 'ok');
+  flashScannerBar(true);
+  if (state.confirmType === 'receive') renderConfirm();
+}
+function allScanned(){
+  const ib = state.intakeBox;
+  if (!ib) return true;
+  const keys = Object.keys(ib.expected);
+  if (!keys.length) return true; // старые заказы без units
+  return keys.every(q => ib.scanned[q] >= ib.expected[q]);
+}
+
+/* ================= 2D-СКАНЕР ================= */
 let globalScanBuffer = '';
 let globalScanLastTime = 0;
-const SCAN_TIMEOUT_MS = 120;   // пауза между символами >120мс = сброс буфера (значит не скан)
-const SCAN_MIN_LEN = 4;        // минимум символов для скана
+const SCAN_TIMEOUT_MS = 120;
+const SCAN_MIN_LEN = 4;
 
 function flashScannerBar(ok){
   const bar = document.getElementById('scannerBar');
@@ -498,23 +476,32 @@ async function handleGlobalScan(raw){
   const v = String(raw||'').trim();
   if (!v) return;
   console.log('[2D scan]', v);
-
   const low = v.toLowerCase();
+
+  // Если активна приёмка — сначала пробуем как QR товара
+  if (state.intakeBox && /^prod[a-z0-9\-_]+$/i.test(low) && !/^prod-?p\d+$/i.test(low) === false || state.intakeBox && /^prod[a-z0-9\-_]+$/i.test(low)){
+    // Это может быть и статический prodp1, и prod-sxxxx
+    if (low in state.intakeBox.expected || /^prod[a-z0-9\-_]+$/.test(low)){
+      handleProductScan(low);
+      return;
+    }
+  }
+
   try {
     if (/^mkt:/i.test(v)){
-      // QR клиента
       flashScannerBar(true);
       await handleIssueLookup({ qr: v });
     } else if (/^box\d{9}$/.test(low)){
-      // QR коробки
       flashScannerBar(true);
       await handleIntakeLookup(low);
     } else if (/^\d{6}$/.test(v)){
-      // 6-значный код клиента
       flashScannerBar(true);
       await handleIssueLookup({ code: v });
+    } else if (/^prod[a-z0-9\-_]+$/i.test(low)){
+      if (state.intakeBox){ handleProductScan(low); return; }
+      flashScannerBar(false);
+      toast('Сначала отсканируйте QR коробки', 'err');
     } else if (/^[a-z0-9_-]{15,}$/i.test(v)){
-      // Просто orderId (совместимость)
       flashScannerBar(true);
       await handleIssueLookup({ qr: 'mkt:' + v });
     } else {
@@ -527,12 +514,9 @@ async function handleGlobalScan(raw){
   }
 }
 
-// Глобальный слушатель: собирает быстрый ввод с любой клавиатуры (2D-сканер)
 document.addEventListener('keydown', (e) => {
-  // Если фокус в поле ввода — не перехватываем (кроме самого сканера, но у нас его нет)
   const ae = document.activeElement;
-  const isEditable = ae && ['INPUT','TEXTAREA','SELECT'].includes(ae.tagName);
-  if (isEditable) return;
+  if (ae && ['INPUT','TEXTAREA','SELECT'].includes(ae.tagName)) return;
 
   const now = Date.now();
   if (now - globalScanLastTime > SCAN_TIMEOUT_MS) globalScanBuffer = '';
@@ -541,33 +525,24 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.keyCode === 13){
     const buf = globalScanBuffer.trim();
     globalScanBuffer = '';
-    if (buf.length >= SCAN_MIN_LEN){
-      e.preventDefault();
-      e.stopPropagation();
-      handleGlobalScan(buf);
-    }
+    if (buf.length >= SCAN_MIN_LEN){ e.preventDefault(); e.stopPropagation(); handleGlobalScan(buf); }
     return;
   }
-
-  // Символы (не Ctrl/Alt/Meta)
   if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey){
     globalScanBuffer += e.key;
-    // обновляем визуальный индикатор буфера
     const bufEl = document.getElementById('scannerBuffer');
     if (bufEl) bufEl.textContent = globalScanBuffer.slice(-24);
   }
 });
 
-/* ================= CONFIRM-МОДАЛ ================= */
+/* ================= CONFIRM ================= */
 function openConfirm(type, data){
-  state.confirmType = type;
-  state.confirmData = data;
-  renderConfirm();
-  openModal('confirmModal');
+  state.confirmType = type; state.confirmData = data;
+  renderConfirm(); openModal('confirmModal');
 }
 function closeConfirm(){
-  state.confirmType = null;
-  state.confirmData = null;
+  state.confirmType = null; state.confirmData = null;
+  state.intakeBox = null;
   closeModal('confirmModal');
 }
 function renderConfirm(){
@@ -583,22 +558,17 @@ function renderQueueConfirm(body, data){
   const item = state.activeOrders[orderId];
   if (!item){ closeConfirm(); return; }
   body.innerHTML = `
-    <div class="modal-head"><b>Заказ в работе</b>
-      <button class="close-btn" id="btnConfirmClose">✕</button></div>
-    <div class="cell-display">
-      <div class="cell-label">Ячейка</div>
-      <div class="cell-num">${item.cell}</div>
-    </div>
+    <div class="modal-head"><b>Заказ в работе</b><button class="close-btn" id="btnConfirmClose">✕</button></div>
+    <div class="cell-display"><div class="cell-label">Ячейка</div><div class="cell-num">${item.cell}</div></div>
     <div class="card" style="margin-bottom:12px">
-      <div class="muted small" style="margin-bottom:6px">Состав заказа</div>
+      <div class="muted small" style="margin-bottom:6px">Состав</div>
       ${(item.items||[]).map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji||''} ${esc(i.name||'')} ×${i.qty||1}</div>`).join('')}
       <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <span class="muted">Итого</span><b>${fmt(item.total)}</b>
-      </div>
+        <span class="muted">Итого</span><b>${fmt(item.total)}</b></div>
     </div>
     <div class="card" style="margin-bottom:14px">
       <div class="info-row"><span>Клиент</span><b>${esc(item.phone)}</b></div>
-      <div class="info-row"><span>Код получения</span><b>${item.code6}</b></div>
+      <div class="info-row"><span>Код</span><b>${item.code6}</b></div>
     </div>
     <button class="btn ok" id="btnQueueIssue">Выдать заказ</button>
     <button class="btn err" id="btnQueueReturn" style="margin-top:4px">Оформить возврат</button>
@@ -611,14 +581,11 @@ function renderQueueConfirm(body, data){
     try {
       await issueOrder(orderId, item.phone);
       removeFromQueue(orderId);
-      toast('Заказ выдан клиенту', 'ok');
+      toast('Заказ выдан', 'ok');
       closeConfirm();
     } catch(err){
       toast(err.message, 'err');
-      if (/уже выдан|возвращён|статус/i.test(err.message)){
-        removeFromQueue(orderId);
-        closeConfirm();
-      }
+      if (/уже выдан|возвращён|статус/i.test(err.message)){ removeFromQueue(orderId); closeConfirm(); }
       btn.disabled = false; btn.textContent = 'Выдать заказ';
     }
   };
@@ -627,54 +594,39 @@ function renderQueueConfirm(body, data){
       const oSnap = await db.ref('users/'+item.phone+'/orders/'+orderId).once('value');
       if (!oSnap.exists()) throw new Error('Заказ не найден');
       const o = oSnap.val();
-      if (o.status !== 'ready' && o.status !== 'issued')
-        throw new Error('Возврат возможен только для готовых или выданных заказов');
+      if (o.status !== 'ready' && o.status !== 'issued') throw new Error('Возврат только для готовых/выданных');
       openConfirm('return', { orderId, phone: item.phone, order: o });
     } catch(err){ toast(err.message, 'err'); }
   };
   document.getElementById('btnQueueDrop').onclick = () => {
-    removeFromQueue(orderId);
-    toast('Убрано из списка', 'ok');
-    closeConfirm();
+    removeFromQueue(orderId); toast('Убрано','ok'); closeConfirm();
   };
-}
-
-function openReturnForm(result){
-  openConfirm('return', result);
 }
 
 function renderReturnConfirm(body, data){
   const { orderId, phone, order } = data;
   body.innerHTML = `
-    <div class="modal-head"><b>Оформление возврата</b>
-      <button class="close-btn" id="btnConfirmClose">✕</button></div>
-    <div class="cell-display">
-      <div class="cell-label">Ячейка</div>
-      <div class="cell-num">${order.cell||'—'}</div>
-    </div>
+    <div class="modal-head"><b>Оформление возврата</b><button class="close-btn" id="btnConfirmClose">✕</button></div>
+    <div class="cell-display"><div class="cell-label">Ячейка</div><div class="cell-num">${order.cell||'—'}</div></div>
     <div class="card" style="margin-bottom:12px">
-      <div class="muted small" style="margin-bottom:6px">Состав заказа</div>
       ${(order.items||[]).map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji||''} ${esc(i.name||'')} ×${i.qty||1}</div>`).join('')}
-      <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-        <span class="muted">Итого</span><b>${fmt(order.total||0)}</b>
-      </div>
     </div>
     <div class="card" style="margin-bottom:12px">
       <div class="info-row"><span>Клиент</span><b>${esc(phone)}</b></div>
       <div class="info-row"><span>Код</span><b>${order.code6||'—'}</b></div>
       <div class="info-row"><span>Статус</span><b>${statusLabel(order.status)}</b></div>
     </div>
-    <label class="muted small" style="display:block;margin-bottom:6px">Причина возврата *</label>
+    <label class="muted small" style="display:block;margin-bottom:6px">Причина *</label>
     <select id="returnReason" class="input">
-      <option value="">— Выберите причину —</option>
+      <option value="">— Выберите —</option>
       <option>Брак товара</option>
       <option>Не подошёл товар</option>
       <option>Не соответствует описанию</option>
       <option>Повреждён при доставке</option>
       <option>Отказ клиента</option>
-      <option value="__other">Другое (свой вариант)</option>
+      <option value="__other">Другое</option>
     </select>
-    <textarea id="returnReasonOther" class="input" placeholder="Опишите причину" style="display:none"></textarea>
+    <textarea id="returnReasonOther" class="input" placeholder="Опишите" style="display:none"></textarea>
     <button class="btn err" id="btnDoReturn">Оформить возврат</button>
     <button class="btn ghost" id="btnCancelReturn">Отмена</button>
   `;
@@ -689,62 +641,71 @@ function renderReturnConfirm(body, data){
   document.getElementById('btnDoReturn').onclick = async () => {
     let reason = sel.value === '__other' ? other.value : sel.value;
     reason = String(reason||'').trim();
-    if (!reason){ toast('Выберите или введите причину', 'err'); return; }
+    if (!reason){ toast('Выберите/введите причину','err'); return; }
     const btn = document.getElementById('btnDoReturn');
     btn.disabled = true; btn.textContent = 'Оформляем…';
-    try {
-      await returnOrder(orderId, phone, reason);
-      toast('Возврат оформлен', 'ok');
-      closeConfirm();
-    } catch(err){
-      toast(err.message, 'err');
-      btn.disabled = false; btn.textContent = 'Оформить возврат';
-    }
+    try { await returnOrder(orderId, phone, reason); toast('Возврат оформлен','ok'); closeConfirm(); }
+    catch(err){ toast(err.message,'err'); btn.disabled=false; btn.textContent='Оформить возврат'; }
   };
-}
-
-function showReceiveConfirm(result){
-  openConfirm('receive', result);
 }
 
 function renderReceiveConfirm(body, data){
   const { orderId, phone, order, boxCode } = data;
+  const ib = state.intakeBox || { expected:{}, scanned:{} };
+  const unitKeys = Object.keys(ib.expected || {});
+
+  // Если старый заказ без units — показываем состав и кнопку сразу
+  const canConfirm = allScanned();
+
+  let unitsHtml = '';
+  if (unitKeys.length){
+    unitsHtml = `<div class="card" style="margin-bottom:12px">
+      <div class="muted small" style="margin-bottom:8px">Отсканируйте QR каждого товара (2D-сканером):</div>
+      ${unitKeys.map(q => {
+        const got = ib.scanned[q]||0, need = ib.expected[q];
+        return `<div class="unit-row ${got>=need?'done':''}">
+          <div class="qr">${esc(q)}</div>
+          <div class="cnt">${got}/${need}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  } else {
+    unitsHtml = `<div class="hint-box" style="margin-bottom:12px">У этого заказа нет привязанных товарных QR (старый заказ). Можно принять без сверки.</div>`;
+  }
+
   body.innerHTML = `
-    <div class="modal-head"><b>Приёмка коробки</b>
-      <button class="close-btn" id="btnConfirmClose">✕</button></div>
-    <div class="cell-display">
-      <div class="cell-label">Положить в ячейку</div>
-      <div class="cell-num">${order.cell||'—'}</div>
-    </div>
+    <div class="modal-head"><b>Приёмка коробки</b><button class="close-btn" id="btnConfirmClose">✕</button></div>
+    <div class="cell-display"><div class="cell-label">Положить в ячейку</div><div class="cell-num">${order.cell||'—'}</div></div>
     <div class="card" style="margin-bottom:12px">
       <div class="muted small" style="margin-bottom:6px">Состав</div>
       ${(order.items||[]).map(i=>`<div style="font-size:14px;padding:2px 0">${i.emoji||''} ${esc(i.name||'')} ×${i.qty||1}</div>`).join('')}
     </div>
+    ${unitsHtml}
     <div class="card" style="margin-bottom:14px">
       <div class="info-row"><span>Клиент</span><b>${esc(phone)}</b></div>
       <div class="info-row"><span>Код получения</span><b>${order.code6||'—'}</b></div>
-      <div class="info-row"><span>Коробка</span><b>${esc(boxCode)}</b></div>
+      <div class="info-row"><span>Коробка</span><b style="font-family:monospace">${esc(boxCode)}</b></div>
     </div>
-    <button class="btn blue" id="btnDoReceive">Подтвердить приёмку</button>
+    <button class="btn blue" id="btnDoReceive" ${canConfirm?'':'disabled'}>${canConfirm?'Подтвердить приёмку':'Сначала отсканируйте все товары'}</button>
     <button class="btn ghost" id="btnCancelReceive">Отмена</button>
   `;
   document.getElementById('btnConfirmClose').onclick = closeConfirm;
   document.getElementById('btnCancelReceive').onclick = closeConfirm;
   document.getElementById('btnDoReceive').onclick = async () => {
+    if (!allScanned()){ toast('Не все товары отсканированы','err'); return; }
     const btn = document.getElementById('btnDoReceive');
     btn.disabled = true; btn.textContent = 'Принимаем…';
     try {
       await receiveOrder(orderId, phone, boxCode);
-      toast('Коробка принята. Заказ готов к выдаче', 'ok');
+      toast('Коробка принята. Готов к выдаче','ok');
       closeConfirm();
     } catch(err){
-      toast(err.message, 'err');
-      btn.disabled = false; btn.textContent = 'Подтвердить приёмку';
+      toast(err.message,'err'); btn.disabled=false; btn.textContent='Подтвердить приёмку';
     }
   };
 }
 
-/* ================= КАМЕРА-СКАНЕР ================= */
+/* ================= КАМЕРА ================= */
 let scanner = null, scanBusy = false;
 async function openScanner(mode){
   state.scanMode = mode;
@@ -758,35 +719,26 @@ async function openScanner(mode){
   inp.className = 'input' + (mode === 'issue' ? ' code-input' : '');
   inp.setAttribute('maxlength', mode === 'issue' ? '6' : '12');
   inp.oninput = (e) => {
-    if (mode === 'issue'){
-      e.target.value = digits(e.target.value);
-    } else {
-      let v = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (!v.startsWith('box') && v.length > 0) v = 'box' + v.replace(/\D/g, '');
-      e.target.value = v.slice(0, 12);
+    if (mode === 'issue') e.target.value = digits(e.target.value);
+    else {
+      let v = e.target.value.toLowerCase().replace(/[^a-z0-9]/g,'');
+      if (!v.startsWith('box') && v.length > 0) v = 'box' + v.replace(/\D/g,'');
+      e.target.value = v.slice(0,12);
     }
   };
   openModal('scanModal');
   if (!scanner){
-    try { scanner = new Html5Qrcode('qrReader'); }
-    catch(e){ console.warn('init', e); return; }
+    try { scanner = new Html5Qrcode('qrReader'); } catch(e){ return; }
   }
   scanBusy = false;
   try {
-    await scanner.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: { width: 240, height: 240 } },
-      (text) => onScan(text),
-      () => {}
-    );
+    await scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } },
+      (text) => onScan(text), () => {});
   } catch(err){
-    console.warn('camera err', err);
-    toast('Камера недоступна — введите код вручную', 'err');
+    toast('Камера недоступна — введите код вручную','err');
   }
 }
-async function stopScanner(){
-  if (scanner){ try { await scanner.stop(); } catch(e){} }
-}
+async function stopScanner(){ if (scanner){ try { await scanner.stop(); } catch(e){} } }
 async function onScan(text){
   if (scanBusy) return;
   scanBusy = true;
@@ -796,30 +748,26 @@ async function onScan(text){
   try {
     if (mode === 'issue') await handleIssueLookup({ qr: text });
     else await handleIntakeLookup(text);
-  } catch(err){ toast(err.message, 'err'); }
+  } catch(err){ toast(err.message,'err'); }
   scanBusy = false;
 }
 document.getElementById('btnScanClose').onclick = async () => {
-  closeModal('scanModal');
-  await stopScanner();
+  closeModal('scanModal'); await stopScanner();
 };
 document.getElementById('btnScanManualGo').onclick = async () => {
   const v = document.getElementById('scanInput').value;
   const mode = state.scanMode;
-  closeModal('scanModal');
-  await stopScanner();
+  closeModal('scanModal'); await stopScanner();
   try {
     if (mode === 'issue') await handleIssueLookup({ code: v });
     else await handleIntakeLookup(v);
-  } catch(err){ toast(err.message, 'err'); }
+  } catch(err){ toast(err.message,'err'); }
 };
 
-/* ================= РЕНДЕР ================= */
+/* ================= RENDER ================= */
 function render(){
   if (!state.pvzId || !state.pvz){ renderLogin(); return; }
-  const pvz = state.pvz;
-  const tab = state.tab;
-
+  const pvz = state.pvz, tab = state.tab;
   document.getElementById('root').innerHTML = `
     <div class="header">
       <div class="logo-sm">Курсив <span>ПВЗ</span></div>
@@ -834,12 +782,11 @@ function render(){
         <div class="scanner-icon">🎯</div>
         <div class="scanner-text">
           <b>2D-сканер активен</b>
-          <span>Сканируйте QR клиента (<code>mkt:…</code>) или коробки (<code>box…</code>) — в любом месте экрана</span>
+          <span>Сканируйте QR клиента (<code>mkt:…</code>), коробки (<code>box…</code>) или товара (<code>prod…</code>)</span>
           <div class="scanner-buffer" id="scannerBuffer"></div>
         </div>
         <div class="scanner-pulse"></div>
       </div>
-
       <h2>${esc(pvz.name)}</h2>
       <div class="card">
         <div class="info-row"><span>Город</span><b>${esc(getPvzCity(pvz)||'—')}</b></div>
@@ -857,36 +804,29 @@ function render(){
     document.getElementById('btnIssueScan').onclick = () => openScanner('issue');
     const inp = document.getElementById('inlineIssueCode');
     inp.addEventListener('input', e => { e.target.value = digits(e.target.value); });
-    inp.addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('btnInlineIssueGo').click();
-    });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btnInlineIssueGo').click(); });
     document.getElementById('btnInlineIssueGo').onclick = async () => {
-      try { await handleIssueLookup({ code: inp.value }); }
-      catch(err){ toast(err.message, 'err'); }
+      try { await handleIssueLookup({ code: inp.value }); } catch(err){ toast(err.message,'err'); }
     };
   } else {
     document.getElementById('btnIntakeScan').onclick = () => openScanner('intake');
     const inp = document.getElementById('inlineIntakeCode');
     inp.addEventListener('input', e => {
-      let v = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '');
-      if (!v.startsWith('box') && v.length > 0) v = 'box' + v.replace(/\D/g, '');
-      e.target.value = v.slice(0, 12);
+      let v = e.target.value.toLowerCase().replace(/[^a-z0-9]/g,'');
+      if (!v.startsWith('box') && v.length > 0) v = 'box' + v.replace(/\D/g,'');
+      e.target.value = v.slice(0,12);
     });
-    inp.addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('btnInlineIntakeGo').click();
-    });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btnInlineIntakeGo').click(); });
     document.getElementById('btnInlineIntakeGo').onclick = async () => {
-      try { await handleIntakeLookup(inp.value); }
-      catch(err){ toast(err.message, 'err'); }
+      try { await handleIntakeLookup(inp.value); } catch(err){ toast(err.message,'err'); }
     };
   }
 }
 
 function renderIssueTab(){
   const queueIds = Object.keys(state.activeOrders);
-  const issuedList = Object.values(state.recentIssued).sort((a,b)=>b.issuedAt-a.issuedAt).slice(0, 5);
-  const returnsList = Object.values(state.recentReturns).sort((a,b)=>b.returnedAt-a.returnedAt).slice(0, 5);
-
+  const issuedList = Object.values(state.recentIssued).sort((a,b)=>b.issuedAt-a.issuedAt).slice(0,5);
+  const returnsList = Object.values(state.recentReturns).sort((a,b)=>b.returnedAt-a.returnedAt).slice(0,5);
   return `
     <div class="card">
       <h3>Сканировать заказ клиента</h3>
@@ -894,12 +834,8 @@ function renderIssueTab(){
       <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите 6-значный код вручную</div>
       <input id="inlineIssueCode" class="input code-input" inputmode="numeric" maxlength="6" placeholder="000000"/>
       <button class="btn ghost" id="btnInlineIssueGo">Найти заказ</button>
-      <div class="hint-box">
-        🎯 <b>2D-сканер</b> — просто наведите и отсканируйте QR в любом месте экрана (не нужно открывать камеру).
-        Если сканируете <b>уже выданный</b> заказ — сразу откроется форма возврата.
-      </div>
+      <div class="hint-box">🎯 <b>2D-сканер</b> — просто отсканируйте QR в любом месте экрана. Уже выданный заказ → форма возврата.</div>
     </div>
-
     <div class="card">
       <h3>В работе (${queueIds.length})</h3>
       ${queueIds.length ? queueIds.map(id => {
@@ -913,13 +849,10 @@ function renderIssueTab(){
             <div class="queue-client">${esc(it.phone)}</div>
             <div class="queue-meta">Код: ${it.code6} · ${(it.items||[]).reduce((s,i)=>s+(i.qty||1),0)} поз. · ${fmt(it.total)}</div>
           </div>
-          <div class="queue-actions">
-            <button class="btn small" data-queueopen="${id}">Открыть</button>
-          </div>
+          <div class="queue-actions"><button class="btn small" data-queueopen="${id}">Открыть</button></div>
         </div>`;
-      }).join('') : '<div class="muted small">Список пуст. Отсканируйте заказ клиента.</div>'}
+      }).join('') : '<div class="muted small">Список пуст</div>'}
     </div>
-
     ${issuedList.length ? `<div class="card">
       <h3>Недавно выдано</h3>
       ${issuedList.map(r=>`
@@ -931,7 +864,6 @@ function renderIssueTab(){
           </div>
         </div>`).join('')}
     </div>` : ''}
-
     ${returnsList.length ? `<div class="card">
       <h3>Недавно возвращено</h3>
       ${returnsList.map(r=>`
@@ -940,7 +872,6 @@ function renderIssueTab(){
           <div style="flex:1">
             <div><b>Ячейка ${r.cell}</b> · код ${r.code6}</div>
             <div class="muted small">${esc(r.phone)} · ${esc(r.reason||'')}</div>
-            <div class="muted small">${new Date(r.returnedAt).toLocaleString('ru-RU')}</div>
           </div>
         </div>`).join('')}
     </div>` : ''}
@@ -948,20 +879,17 @@ function renderIssueTab(){
 }
 
 function renderIntakeTab(){
-  const intakeList = Object.values(state.recentIntake).sort((a,b)=>b.receivedAt-a.receivedAt).slice(0, 10);
+  const intakeList = Object.values(state.recentIntake).sort((a,b)=>b.receivedAt-a.receivedAt).slice(0,10);
   return `
     <div class="card">
       <h3>Приёмка коробок</h3>
-      <p class="muted small" style="margin:0 0 12px">Отсканируйте QR коробки (<b>box + 9 цифр</b>) или введите код</p>
-      <button class="btn blue" id="btnIntakeScan">📦 Сканировать камерой</button>
+      <p class="muted small" style="margin:0 0 12px">Шаг 1 — отсканируйте QR коробки (box…). Шаг 2 — отсканируйте QR каждого товара. Шаг 3 — подтвердите.</p>
+      <button class="btn blue" id="btnIntakeScan">📦 Сканировать коробку</button>
       <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите код коробки</div>
       <input id="inlineIntakeCode" class="input" placeholder="box000000000" autocomplete="off"/>
-      <button class="btn ghost" id="btnInlineIntakeGo">Принять коробку</button>
-      <div class="hint-box">
-        🎯 <b>2D-сканер</b> — просто наведите и отсканируйте QR коробки в любом месте экрана. Код автоматически определится по префиксу <code>box</code>.
-      </div>
+      <button class="btn ghost" id="btnInlineIntakeGo">Начать приёмку</button>
+      <div class="hint-box">🎯 <b>2D-сканер</b> — сначала box-код, потом QR товаров (prod…)</div>
     </div>
-
     ${intakeList.length ? `<div class="card">
       <h3>Недавно принято</h3>
       ${intakeList.map(r=>`
@@ -976,21 +904,11 @@ function renderIntakeTab(){
   `;
 }
 
-/* ================= ОБРАБОТЧИК КЛИКОВ ================= */
 document.addEventListener('click', (e) => {
-  const closeBtn = e.target.closest('[data-close]');
-  if (closeBtn){ closeModal(closeBtn.dataset.close); return; }
-
-  const queueOpen = e.target.closest('[data-queueopen]');
-  if (queueOpen){
-    e.preventDefault();
-    e.stopPropagation();
-    openConfirm('queue', { orderId: queueOpen.dataset.queueopen });
-    return;
-  }
+  const q = e.target.closest('[data-queueopen]');
+  if (q){ openConfirm('queue', { orderId: q.dataset.queueopen }); return; }
 });
 
-/* ================= СТАРТ ================= */
 (function boot(){
   const saved = localStorage.getItem('pvz_session');
   if (saved) subscribe(saved);
