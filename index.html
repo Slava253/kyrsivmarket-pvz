@@ -187,6 +187,11 @@ const state = {
   confirmType:null, confirmData:null,
   intakeBox: null,
 };
+
+// Переменные для блокировки сканирования
+let scanLocked = false;
+let scanLockTimeout = null;
+
 let unsubPvz=null, unsubIssued=null, unsubIntake=null, unsubReturns=null, unsubOrders=null;
 let renderPending=false;
 function renderSoon(){
@@ -363,7 +368,6 @@ async function issueOrder(orderId, phone, issuedItems, returnedItems){
   updates['codeIndex/'+o.code6] = null;
   updates['pvzIssued/'+state.pvzId+'/'+orderId] = { phone, code6: o.code6, cell: o.cell, issuedAt: Date.now() };
 
-  // Если есть невыданные товары (сняты галочки), создаем отдельный заказ на возврат
   if (returnedItems.length > 0) {
     const retTotal = returnedItems.reduce((s, i) => s + i.price * i.qty, 0);
     const retOrderRef = db.ref('users/'+phone+'/orders').push();
@@ -470,6 +474,8 @@ async function handleIntakeLookup(boxCode){
 }
 
 function handleProductScan(qr){
+  if (scanLocked) return; // Игнорируем, если включена задержка
+
   const ib = state.intakeBox;
   if (!ib){ toast('Сначала отсканируйте коробку','err'); return; }
   const q = String(qr||'').trim().toLowerCase();
@@ -480,22 +486,69 @@ function handleProductScan(qr){
     return;
   }
   if (ib.scanned[q] >= ib.expected[q]){
-    toast('Уже отсканировано нужное кол-во: ' + q, 'err');
+    toast('Все штуки этого товара уже отсканированы: ' + q, 'err');
     flashScannerBar(false);
     return;
   }
+  
   ib.scanned[q]++;
   toast(`✓ ${q} (${ib.scanned[q]}/${ib.expected[q]})`, 'ok');
   flashScannerBar(true);
   
   if (state.confirmType === 'receive') {
-    // Если открыта встроенная камера, обновляем только список, чтобы не сбить камеру
     const camWrap = document.getElementById('inlineCameraWrap');
     if (camWrap && camWrap.style.display !== 'none') {
       updateInlineReceiveUI();
     } else {
       renderConfirm();
     }
+  }
+
+  // Если есть еще что сканировать, ставим блокировку на 5 секунд
+  if (!allScanned()) {
+    lockScan(5);
+  }
+}
+
+function lockScan(seconds) {
+  scanLocked = true;
+  clearTimeout(scanLockTimeout);
+  
+  let overlay = document.getElementById('scanCooldownOverlay');
+  const inlineCameraWrap = document.getElementById('inlineCameraWrap');
+  
+  if (inlineCameraWrap && inlineCameraWrap.style.display !== 'none') {
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'scanCooldownOverlay';
+      overlay.style = 'position:absolute; inset:0; background:rgba(0,0,0,0.75); display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:12px; z-index:10; color:#fff; font-weight:bold; font-size:18px;';
+      overlay.innerHTML = `<div style="font-size:40px; margin-bottom:8px;">⏳</div><div id="cooldownText">Ждите ${seconds} сек...</div>`;
+      inlineCameraWrap.style.position = 'relative';
+      inlineCameraWrap.appendChild(overlay);
+    }
+    
+    let left = seconds;
+    document.getElementById('cooldownText').textContent = `Ждите ${left} сек...`;
+    
+    const interval = setInterval(() => {
+      left--;
+      if (left > 0 && document.getElementById('cooldownText')) {
+        document.getElementById('cooldownText').textContent = `Ждите ${left} сек...`;
+      }
+    }, 1000);
+
+    scanLockTimeout = setTimeout(() => {
+      scanLocked = false;
+      clearInterval(interval);
+      if (document.getElementById('scanCooldownOverlay')) {
+        document.getElementById('scanCooldownOverlay').remove();
+      }
+    }, seconds * 1000);
+  } else {
+    toast(`Ожидайте ${seconds} сек. перед следующим сканом`, 'ok');
+    scanLockTimeout = setTimeout(() => {
+      scanLocked = false;
+    }, seconds * 1000);
   }
 }
 
@@ -524,6 +577,10 @@ function flashScannerBar(ok){
 async function handleGlobalScan(raw){
   const v = String(raw||'').trim();
   if (!v) return;
+  
+  // Если сканер на паузе, игнорируем любые коды
+  if (scanLocked) return;
+
   console.log('[2D scan]', v);
   const low = v.toLowerCase();
 
@@ -586,6 +643,11 @@ function openConfirm(type, data){
 }
 function closeConfirm(){
   stopInlineCamera();
+  scanLocked = false;
+  if (scanLockTimeout) clearTimeout(scanLockTimeout);
+  const overlay = document.getElementById('scanCooldownOverlay');
+  if (overlay) overlay.remove();
+  
   state.confirmType = null; state.confirmData = null;
   state.intakeBox = null;
   closeModal('confirmModal');
@@ -797,7 +859,6 @@ function renderReceiveConfirm(body, data){
   };
 }
 
-// Функция для обновления только списка, чтобы камера не закрывалась
 function updateInlineReceiveUI() {
   const ib = state.intakeBox;
   if (!ib) return;
@@ -818,9 +879,9 @@ function updateInlineReceiveUI() {
   });
 }
 
-// ===== КАМЕРА В МОДАЛЬНОМ ОКНЕ ПРИЁМКИ =====
 let inlineScanner = null;
 async function startInlineCamera() {
+  if (scanLocked) { toast('Подождите, идёт задержка','err'); return; }
   document.getElementById('btnStartInlineScan').style.display = 'none';
   document.getElementById('inlineCameraWrap').style.display = 'block';
   if (!inlineScanner) {
@@ -831,7 +892,6 @@ async function startInlineCamera() {
       { facingMode: "environment" },
       { fps: 10, qrbox: { width: 250, height: 250 } },
       (text) => {
-        // Сканируем без остановки камеры
         handleProductScan(text);
       },
       () => {}
@@ -850,7 +910,6 @@ function stopInlineCamera() {
   if (btn) btn.style.display = 'block';
 }
 
-// ===== ГЛОБАЛЬНЫЙ СКАНЕР И МОДАЛКА (для выдачи) =====
 let scanner = null, scanBusy = false;
 async function openScanner(mode){
   state.scanMode = mode;
@@ -1028,7 +1087,7 @@ function renderIntakeTab(){
   return `
     <div class="card">
       <h3>Приёмка коробок</h3>
-      <p class="muted small" style="margin:0 0 12px">Шаг 1 — отсканируйте QR коробки (box…). Шаг 2 — отсканируйте QR каждого товара. Шаг 3 — подтвердите.</p>
+      <p class="muted small" style="margin:0 0 12px">Шаг 1 — отсканируйте QR коробки (box…). Шаг 2 — отсканируйте QR каждого товара (с задержкой 5 сек). Шаг 3 — подтвердите.</p>
       <button class="btn blue" id="btnIntakeScan">📦 Сканировать коробку</button>
       <div class="muted small" style="text-align:center;margin:14px 0 8px">или введите код коробки</div>
       <input id="inlineIntakeCode" class="input" placeholder="box000000000" autocomplete="off"/>
