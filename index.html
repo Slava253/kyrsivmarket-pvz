@@ -165,6 +165,7 @@ function toast(msg, type){
 function openModal(id){ document.getElementById(id).classList.add('show'); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 function statusLabel(s){
+  if (s === 'sc_pending') return 'В сортировочном центре';
   if (s === 'pending' || s === 'transit') return 'В пути';
   if (s === 'ready') return 'Готов к выдаче';
   if (s === 'issued') return 'Выдан';
@@ -326,9 +327,7 @@ async function findOrderByQr(qrText){
   if (!oSnap.exists()) throw new Error('Заказ не найден');
   return { orderId, phone, order: oSnap.val() };
 }
-
 async function findOrderByReturnQr(qrText) {
-  // формат ret:orderId:date
   const parts = String(qrText||'').split(':');
   if (parts.length !== 3 || parts[0] !== 'ret') throw new Error('Неверный формат QR возврата');
   const orderId = parts[1];
@@ -343,7 +342,6 @@ async function findOrderByReturnQr(qrText) {
   if (!oSnap.exists()) throw new Error('Заказ не найден');
   return { orderId, phone, order: oSnap.val() };
 }
-
 async function findOrderByCode(code6){
   code6 = digits(code6);
   if (code6.length !== 6) throw new Error('Код должен быть из 6 цифр');
@@ -409,7 +407,6 @@ async function issueOrder(orderId, phone, issuedItems, returnedItems, payNow){
     updates['pvzReturns/'+state.pvzId+'/'+retOrderId] = {
       phone, code6: o.code6, cell: o.cell, reason: 'Частичный возврат при выдаче', returnedAt: Date.now()
     };
-    // Возврат средств на кошелек, если заказ был оплачен
     if (o.paymentStatus === 'paid' || payNow) {
       const uSnap = await db.ref('users/'+phone+'/wallet').once('value');
       const bal = uSnap.val() || 0;
@@ -428,15 +425,12 @@ async function processReturn(orderId, phone, returnedItems, reason){
   const refundTotal = returnedItems.reduce((s, i) => s + i.price * i.qty, 0);
   const updates = {};
   
-  // Уменьшаем состав или помечаем как возвращенный
   if (returnedItems.length === o.items.length && returnedItems.every((ri, idx) => ri.id === o.items[idx].id && ri.qty === o.items[idx].qty)) {
-      // полный возврат
       updates['users/'+phone+'/orders/'+orderId+'/status'] = 'returned';
       updates['users/'+phone+'/orders/'+orderId+'/returnReason'] = reason;
       updates['orderIndex/'+orderId+'/status'] = 'returned';
       updates['orderIndex/'+orderId+'/returnReason'] = reason;
   } else {
-      // частичный
       const newItems = [];
       o.items.forEach(oi => {
          const ret = returnedItems.find(ri => ri.id === oi.id);
@@ -462,8 +456,7 @@ async function processReturn(orderId, phone, returnedItems, reason){
       };
   }
 
-  // Возврат денег на кошелек
-  updates['users/'+phone+'/orders/'+orderId+'/paymentStatus'] = 'paid'; // assume paid now
+  updates['users/'+phone+'/orders/'+orderId+'/paymentStatus'] = 'paid';
   const uSnap = await db.ref('users/'+phone+'/wallet').once('value');
   const bal = uSnap.val() || 0;
   updates['users/'+phone+'/wallet'] = bal + refundTotal;
@@ -512,7 +505,6 @@ async function handleReturnLookup(input) {
   
   state.returnData = { ...result, scanned: {}, expected: {} };
   result.order.items.forEach(it => {
-     // В реальности тут нужны qr из units, но упростим для UI
      state.returnData.expected[it.id] = it.qty;
      state.returnData.scanned[it.id] = 0;
   });
@@ -552,17 +544,28 @@ function handleProductScan(qr){
   flashScannerBar(true);
   
   if (state.confirmType === 'receive') {
-    const camWrap = document.getElementById('inlineCameraWrap');
-    if (camWrap && camWrap.style.display !== 'none') updateInlineReceiveUI();
-    else renderConfirm();
+    // Прямое обновление DOM без перезагрузки модалки
+    const row = document.querySelector(`.unit-row[data-qr="${q}"]`);
+    if (row) {
+      const got = ib.scanned[q], need = ib.expected[q];
+      row.className = `unit-row ${got>=need?'done':''}`;
+      const cntEl = row.querySelector('.cnt');
+      if (cntEl) cntEl.textContent = `${got}/${need}`;
+    }
+    const btn = document.getElementById('btnDoReceive');
+    if (btn) {
+      const canConfirm = allScanned();
+      btn.disabled = !canConfirm;
+      btn.textContent = canConfirm ? 'Подтвердить приёмку' : 'Сначала отсканируйте все товары';
+    }
   }
+  
   if (!allScanned()) lockScan(5);
 }
 
 function handleReturnProductScan(qr) {
     const rd = state.returnData;
     if (!rd) return;
-    // Ищем товар по qr (упрощенно ищем по id или qr из базы)
     const item = rd.order.items.find(i => i.id === qr || i.qr === qr);
     if (!item) { toast('Товар не из этого заказа', 'err'); return; }
     if (rd.scanned[item.id] >= rd.expected[item.id]) { toast('Уже отсканировано', 'err'); return; }
@@ -578,6 +581,48 @@ function allScanned(){
   const keys = Object.keys(ib.expected);
   if (!keys.length) return true;
   return keys.every(q => ib.scanned[q] >= ib.expected[q]);
+}
+
+function lockScan(seconds) {
+  scanLocked = true;
+  clearTimeout(scanLockTimeout);
+  
+  let overlay = document.getElementById('scanCooldownOverlay');
+  const inlineCameraWrap = document.getElementById('inlineCameraWrap');
+  
+  if (inlineCameraWrap && inlineCameraWrap.style.display !== 'none') {
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'scanCooldownOverlay';
+      overlay.style = 'position:absolute; inset:0; background:rgba(0,0,0,0.75); display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:12px; z-index:10; color:#fff; font-weight:bold; font-size:18px;';
+      overlay.innerHTML = `<div style="font-size:40px; margin-bottom:8px;">⏳</div><div id="cooldownText">Ждите ${seconds} сек...</div>`;
+      inlineCameraWrap.style.position = 'relative';
+      inlineCameraWrap.appendChild(overlay);
+    }
+    
+    let left = seconds;
+    document.getElementById('cooldownText').textContent = `Ждите ${left} сек...`;
+    
+    const interval = setInterval(() => {
+      left--;
+      if (left > 0 && document.getElementById('cooldownText')) {
+        document.getElementById('cooldownText').textContent = `Ждите ${left} сек...`;
+      }
+    }, 1000);
+
+    scanLockTimeout = setTimeout(() => {
+      scanLocked = false;
+      clearInterval(interval);
+      if (document.getElementById('scanCooldownOverlay')) {
+        document.getElementById('scanCooldownOverlay').remove();
+      }
+    }, seconds * 1000);
+  } else {
+    toast(`Ожидайте ${seconds} сек. перед следующим сканом`, 'ok');
+    scanLockTimeout = setTimeout(() => {
+      scanLocked = false;
+    }, seconds * 1000);
+  }
 }
 
 let globalScanBuffer = '';
@@ -984,7 +1029,6 @@ document.addEventListener('click', (e) => {
   if (q){ openConfirm('queue', { orderId: q.dataset.queueopen }); return; }
 });
 
-// Привязки для инпутов (так как render перерисовывает DOM)
 document.addEventListener('keydown', (e) => {
    if (e.key === 'Enter') {
       if (e.target.id === 'inlineIssueCode') document.getElementById('btnInlineIssueGo').click();
