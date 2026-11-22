@@ -580,9 +580,20 @@ function handleReturnProductScan(qr) {
     if (!item) { toast('Товар не из этого заказа', 'err'); return; }
     if (rd.scanned[item.id] >= rd.expected[item.id]) { toast('Уже отсканировано', 'err'); return; }
     rd.scanned[item.id]++;
-    toast(`✓ ${item.name}`, 'ok');
+    toast(`✓ ${item.name} (${rd.scanned[item.id]}/${rd.expected[item.id]})`, 'ok');
     flashScannerBar(true);
-    renderConfirm();
+    
+    const idx = rd.order.items.findIndex(i => i.id === item.id);
+    if (idx !== -1) {
+       const rows = document.querySelectorAll('#unitListBox .unit-row');
+       if (rows[idx]) {
+          const row = rows[idx];
+          const got = rd.scanned[item.id], need = rd.expected[item.id];
+          row.className = `unit-row ${got>=need?'done':''}`;
+          const cntEl = row.querySelector('.cnt');
+          if (cntEl) cntEl.textContent = `${got}/${need}`;
+       }
+    }
 }
 
 function allScanned(){
@@ -883,46 +894,93 @@ function renderReturnScanConfirm(body, data) {
   };
 }
 
+// === ИСПРАВЛЕННАЯ РАБОТА С КАМЕРОЙ ===
 let inlineScanner = null;
-async function startInlineCamera() {
-  if (scanLocked) { toast('Подождите...','err'); return; }
-  document.getElementById('btnStartInlineScan').style.display = 'none';
-  document.getElementById('inlineCameraWrap').style.display = 'block';
-  if (!inlineScanner) inlineScanner = new Html5Qrcode("inlineQrReader");
-  try {
-    await inlineScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
-      (text) => {
-        if (state.confirmType === 'receive') handleProductScan(text);
-        else if (state.confirmType === 'return_scan') handleReturnProductScan(text);
-      }, () => {});
-  } catch (err) { toast('Камера недоступна', 'err'); }
-}
+
 function stopInlineCamera() {
-  if (inlineScanner) { try { inlineScanner.stop(); } catch(e){} }
   const wrap = document.getElementById('inlineCameraWrap');
   const btn = document.getElementById('btnStartInlineScan');
   if (wrap) wrap.style.display = 'none';
   if (btn) btn.style.display = 'block';
+
+  if (inlineScanner) { 
+    const s = inlineScanner; 
+    inlineScanner = null;
+    try { s.stop().catch(()=>{}); } catch(e){} 
+  }
+  
+  const overlay = document.getElementById('scanCooldownOverlay');
+  if (overlay) overlay.remove();
+}
+
+async function startInlineCamera() {
+  if (scanLocked) { toast('Подождите, идет задержка','err'); return; }
+  
+  // Останавливаем предыдущий, если был
+  if (inlineScanner) {
+    try { await inlineScanner.stop(); } catch(e){}
+    inlineScanner = null;
+  }
+
+  document.getElementById('btnStartInlineScan').style.display = 'none';
+  document.getElementById('inlineCameraWrap').style.display = 'block';
+  
+  setTimeout(async () => {
+    try {
+      const el = document.getElementById('inlineQrReader');
+      if (!el) return;
+      
+      inlineScanner = new Html5Qrcode("inlineQrReader");
+      await inlineScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 250 } },
+        (text) => {
+          if (state.confirmType === 'receive') handleProductScan(text);
+          else if (state.confirmType === 'return_scan') handleReturnProductScan(text);
+        }, () => {});
+    } catch (err) { 
+      console.error(err);
+      toast('Камера недоступна', 'err'); 
+    }
+  }, 150);
 }
 
 let scanner = null, scanBusy = false;
+
+async function stopScanner() { 
+  if (scanner) { 
+    const s = scanner;
+    scanner = null;
+    try { await s.stop(); } catch(e){} 
+  } 
+}
+
 async function openScanner(mode){
+  await stopScanner();
+
   state.scanMode = mode;
   const title = mode === 'issue' ? 'Сканировать заказ' : 'Сканировать QR';
   document.getElementById('scanTitle').textContent = title;
   const inp = document.getElementById('scanInput');
   inp.value = ''; inp.placeholder = mode === 'issue' ? 'mkt:... или 000000' : 'box000... или ret:...';
   inp.className = 'input';
+  
   openModal('scanModal');
-  if (!scanner) scanner = new Html5Qrcode('qrReader');
-  scanBusy = false;
-  try {
-    await scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } },
-      (text) => onScan(text), () => {});
-  } catch(err){ toast('Камера недоступна','err'); }
+  
+  setTimeout(async () => {
+    try {
+      const el = document.getElementById('qrReader');
+      if (!el) return;
+      
+      scanner = new Html5Qrcode('qrReader');
+      scanBusy = false;
+      await scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 240, height: 240 } },
+        (text) => onScan(text), () => {});
+    } catch(err){ 
+      console.error(err);
+      toast('Камера недоступна','err'); 
+    }
+  }, 150);
 }
 
-async function stopScanner(){ if (scanner){ try { await scanner.stop(); } catch(e){} } }
 async function onScan(text){
   if (scanBusy) return; scanBusy = true;
   await stopScanner(); closeModal('scanModal');
