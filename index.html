@@ -364,7 +364,7 @@ async function findOrderByBox(boxCode){
   return { orderId: data.orderId, phone: data.phone, order: oSnap.val(), boxCode: code };
 }
 
-async function issueOrder(orderId, phone, issuedItems, returnedItems, payNow){
+async function issueOrder(orderId, phone, issuedItems, returnedItems, isUnpaid){
   const oSnap = await db.ref('users/'+phone+'/orders/'+orderId).once('value');
   if (!oSnap.exists()) throw new Error('Заказ не найден');
   const o = oSnap.val();
@@ -372,28 +372,43 @@ async function issueOrder(orderId, phone, issuedItems, returnedItems, payNow){
   
   const updates = {};
   const issuedTotal = issuedItems.reduce((s, i) => s + i.price * i.qty, 0);
+  const returnedTotal = returnedItems.reduce((s, i) => s + i.price * i.qty, 0);
+  
+  if (isUnpaid) {
+    const uSnap = await db.ref('users/'+phone+'/wallet').once('value');
+    const bal = uSnap.val() || 0;
+    if (bal < issuedTotal) {
+      throw new Error('Денег на счёте не достаточно');
+    }
+    updates['users/'+phone+'/wallet'] = bal - issuedTotal;
+  } else {
+    if (returnedTotal > 0) {
+      const uSnap = await db.ref('users/'+phone+'/wallet').once('value');
+      const bal = uSnap.val() || 0;
+      updates['users/'+phone+'/wallet'] = bal + returnedTotal;
+    }
+  }
   
   updates['users/'+phone+'/orders/'+orderId+'/status'] = 'issued';
   updates['users/'+phone+'/orders/'+orderId+'/issuedAt'] = Date.now();
   updates['users/'+phone+'/orders/'+orderId+'/items'] = issuedItems;
   updates['users/'+phone+'/orders/'+orderId+'/total'] = issuedTotal;
-  if (payNow) updates['users/'+phone+'/orders/'+orderId+'/paymentStatus'] = 'paid';
+  updates['users/'+phone+'/orders/'+orderId+'/paymentStatus'] = 'paid';
 
   updates['orderIndex/'+orderId+'/status'] = 'issued';
   updates['orderIndex/'+orderId+'/total'] = issuedTotal;
-  if (payNow) updates['orderIndex/'+orderId+'/paymentStatus'] = 'paid';
+  updates['orderIndex/'+orderId+'/paymentStatus'] = 'paid';
   
   updates['codeIndex/'+o.code6] = null;
   updates['pvzIssued/'+state.pvzId+'/'+orderId] = { phone, code6: o.code6, cell: o.cell, issuedAt: Date.now() };
 
   if (returnedItems.length > 0) {
-    const retTotal = returnedItems.reduce((s, i) => s + i.price * i.qty, 0);
     const retOrderRef = db.ref('users/'+phone+'/orders').push();
     const retOrderId = retOrderRef.key;
     
     let pvzCity = o.pvzCity || (state.pvz ? getPvzCity(state.pvz) : '');
     const retOrder = {
-      items: returnedItems, total: retTotal, pvzId: o.pvzId,
+      items: returnedItems, total: returnedTotal, pvzId: o.pvzId,
       pvzAddress: o.pvzAddress || '', pvzName: o.pvzName || '', pvzCity: pvzCity,
       code6: o.code6, boxCode: o.boxCode || '', cell: o.cell, status: 'returned',
       returnReason: 'Частичный возврат при выдаче', ts: Date.now(), returnedAt: Date.now()
@@ -402,17 +417,13 @@ async function issueOrder(orderId, phone, issuedItems, returnedItems, payNow){
     updates['orderIndex/'+retOrderId] = {
       phone, code6: o.code6, boxCode: o.boxCode || '', status: 'returned',
       pvzId: o.pvzId, pvzName: o.pvzName || '', pvzCity: pvzCity,
-      cell: o.cell, total: retTotal, ts: Date.now(), returnReason: 'Частичный возврат при выдаче'
+      cell: o.cell, total: returnedTotal, ts: Date.now(), returnReason: 'Частичный возврат при выдаче'
     };
     updates['pvzReturns/'+state.pvzId+'/'+retOrderId] = {
       phone, code6: o.code6, cell: o.cell, reason: 'Частичный возврат при выдаче', returnedAt: Date.now()
     };
-    if (o.paymentStatus === 'paid' || payNow) {
-      const uSnap = await db.ref('users/'+phone+'/wallet').once('value');
-      const bal = uSnap.val() || 0;
-      updates['users/'+phone+'/wallet'] = bal + retTotal;
-    }
   }
+  
   await db.ref().update(updates);
 }
 
@@ -544,7 +555,6 @@ function handleProductScan(qr){
   flashScannerBar(true);
   
   if (state.confirmType === 'receive') {
-    // Прямое обновление DOM без перезагрузки модалки
     const row = document.querySelector(`.unit-row[data-qr="${q}"]`);
     if (row) {
       const got = ib.scanned[q], need = ib.expected[q];
@@ -735,7 +745,7 @@ function renderQueueConfirm(body, data){
     <div style="display:flex;justify-content:space-between;margin-top:10px;padding:14px;background:var(--card2);border-radius:12px;margin-bottom:14px">
       <span class="muted">Итого к выдаче</span><b id="modalTotal">${fmt(item.total)}</b>
     </div>
-    ${item.paymentStatus === 'unpaid' ? `<div class="hint-box" style="margin-bottom:14px; color:var(--warn)">Заказ не оплачен. Примите оплату от клиента при выдаче.</div>` : ''}
+    ${item.paymentStatus === 'unpaid' ? `<div class="hint-box" style="margin-bottom:14px; color:var(--warn)">Заказ не оплачен. При нажатии "Выдать" деньги будут списаны с кошелька клиента.</div>` : ''}
     <button class="btn ok" id="btnQueueIssue">Выдать выбранные</button>
     <button class="btn ghost" id="btnQueueDrop" style="margin-top:4px">Убрать из списка</button>
   `;
@@ -761,7 +771,7 @@ function renderQueueConfirm(body, data){
     try {
       await issueOrder(orderId, item.phone, issued, returned, item.paymentStatus === 'unpaid');
       removeFromQueue(orderId);
-      toast('Выдача оформлена', 'ok');
+      toast('Заказ успешно выдан', 'ok');
       closeConfirm();
     } catch(err){
       toast(err.message, 'err');
